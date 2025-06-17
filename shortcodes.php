@@ -1,11 +1,19 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-add_shortcode('alter', function ($atts) {
-    $atts = shortcode_atts(['datum' => ''], $atts);
-    if (empty($atts['datum'])) return '';
-    $geburt = DateTime::createFromFormat('d.m.Y', $atts['datum']);
+add_shortcode('alter', function ($atts, $content = null) {
+    $atts = shortcode_atts([
+        'datum' => '',
+        'd' => ''
+    ], $atts);
+
+    $input = !empty($atts['datum']) ? $atts['datum'] : $atts['d'];
+
+    if (empty($input)) return '';
+
+    $geburt = DateTime::createFromFormat('d.m.Y', $input);
     if (!$geburt) return '';
+
     $heute = new DateTime();
     return esc_html($heute->diff($geburt)->y . ' Jahre');
 });
