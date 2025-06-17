@@ -1,0 +1,39 @@
+<?php
+if (!defined('ABSPATH')) exit;
+
+add_shortcode('alter', function ($atts) {
+    $atts = shortcode_atts(['datum' => ''], $atts);
+    if (empty($atts['datum'])) return '';
+    $geburt = DateTime::createFromFormat('d.m.Y', $atts['datum']);
+    if (!$geburt) return '';
+    $heute = new DateTime();
+    return esc_html($heute->diff($geburt)->y . ' Jahre');
+});
+
+add_shortcode('lesedauer', function () {
+    global $post;
+    if (!$post || empty($post->post_content)) return '';
+    $text = strip_tags($post->post_content);
+    $minuten = ceil(str_word_count($text) / 200);
+    return esc_html($minuten . ' Minute' . ($minuten > 1 ? 'n' : '') . ' Lesedauer');
+});
+
+add_shortcode('ad', function() {
+    ob_start();
+    ?>
+    <div class="mvpclub-ad">
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3126572075544456"
+            crossorigin="anonymous"></script>
+        <ins class="adsbygoogle"
+            style="display:block"
+            data-ad-client="ca-pub-3126572075544456"
+            data-ad-slot="8708811170"
+            data-ad-format="auto"
+            data-full-width-responsive="true"></ins>
+        <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </div>
+    <?php
+    return ob_get_clean();
+});
