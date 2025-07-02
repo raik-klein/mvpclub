@@ -37,7 +37,8 @@ jQuery(function($){
         var canvas = $('#mvpclub-radar-preview');
         if(settings.length && canvas.length){
             var h = settings.outerHeight();
-            canvas.attr('width', h).attr('height', h);
+            var size = Math.min(250, h);
+            canvas.attr('width', size).attr('height', size);
         }
     }
 
@@ -79,4 +80,20 @@ jQuery(function($){
         $('#tab-'+tab).addClass('active').show();
         if(tab === 'radar'){ adjustRadarSize(); renderRadar(); }
     });
+
+    function updateBirthplaceSelect(){
+        var select = $('#birthplace_country');
+        if(!select.length) return;
+        select.find('option').each(function(){
+            var full = $(this).data('full');
+            if(full){ $(this).text(full); }
+        });
+        var opt = select.find('option:selected');
+        if(opt.length){
+            opt.text(opt.data('emoji'));
+        }
+    }
+
+    $(document).on('change', '#birthplace_country', updateBirthplaceSelect);
+    updateBirthplaceSelect();
 });

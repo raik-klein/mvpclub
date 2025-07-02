@@ -235,6 +235,9 @@ function mvpclub_player_admin_scripts($hook) {
     $screen = get_current_screen();
     if ($screen->post_type !== 'mvpclub-spieler') return;
 
+    remove_action('admin_print_scripts', 'print_emoji_detection_script');
+    remove_action('admin_print_styles', 'print_emoji_styles');
+
     wp_enqueue_script(
         'mvpclub-nationality-autocomplete',
         plugins_url('assets/nationality-autocomplete.js', __FILE__),
@@ -359,11 +362,12 @@ function mvpclub_player_meta_box($post) {
             }
             $countries = mvpclub_get_country_map();
             echo '<tr><th><label for="birthplace_city">' . esc_html($label) . '</label></th><td>';
-            echo '<select name="birthplace_country">';
+            echo '<select name="birthplace_country" id="birthplace_country" class="mvpclub-emoji-select">';
             echo '<option value=""></option>';
             foreach ($countries as $c) {
                 $sel = $country === $c['emoji'] ? ' selected' : '';
-                echo '<option value="' . esc_attr($c['emoji']) . '"' . $sel . '>' . esc_html($c['emoji'] . ' ' . $c['name']) . '</option>';
+                $full = $c['emoji'] . ' ' . $c['name'];
+                echo '<option value="' . esc_attr($c['emoji']) . '"' . $sel . ' data-emoji="' . esc_attr($c['emoji']) . '" data-full="' . esc_attr($full) . '">' . esc_html($full) . '</option>';
             }
             echo '</select> ';
             echo '<input type="text" name="birthplace_city" id="birthplace_city" value="' . esc_attr($city) . '" class="regular-text" />';
