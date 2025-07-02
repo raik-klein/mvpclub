@@ -37,10 +37,10 @@ jQuery(function($){
             var list = window.mvpclubPlayerAdmin.characteristics[type] || [];
             list.forEach(function(item){
                 var optgroup = $('<optgroup>').attr('label', item.main);
-                optgroup.append('<option value="'+item.main+'">'+item.main+'</option>');
+                optgroup.append('<option value="'+item.id+'">'+item.main+'</option>');
                 if(Array.isArray(item.subs)){
                     item.subs.forEach(function(s){
-                        optgroup.append('<option value="'+s+'">'+s+'</option>');
+                        optgroup.append('<option value="'+s.id+'">'+s.name+'</option>');
                     });
                 }
                 select.append(optgroup);
