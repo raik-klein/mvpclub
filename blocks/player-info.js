@@ -4,6 +4,8 @@
     var __ = i18n.__;
     var SelectControl = components.SelectControl;
     var Spinner = components.Spinner;
+    var InspectorControls = wp.blockEditor.InspectorControls;
+    var ServerSideRender = wp.serverSideRender;
     var useSelect = data.useSelect;
 
     registerBlockType('mvpclub/player-info', {
@@ -26,14 +28,16 @@
             players.forEach(function(p) {
                 options.push({ label: p.title.rendered, value: p.id });
             });
-
-            return el('div', {},
-                el(SelectControl, {
-                    label: __('Spieler ausw\u00E4hlen', 'mvpclub'),
-                    value: props.attributes.playerId,
-                    options: options,
-                    onChange: function(val) { props.setAttributes({ playerId: parseInt(val, 10) }); }
-                })
+            return el(element.Fragment, {},
+                el(InspectorControls, {},
+                    el(SelectControl, {
+                        label: __('Spieler ausw\u00E4hlen', 'mvpclub'),
+                        value: props.attributes.playerId,
+                        options: options,
+                        onChange: function(val) { props.setAttributes({ playerId: parseInt(val, 10) }); }
+                    })
+                ),
+                el(ServerSideRender, { block: 'mvpclub/player-info', attributes: props.attributes })
             );
         },
         save: function() {
