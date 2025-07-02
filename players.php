@@ -97,39 +97,68 @@ function mvpclub_format_detail_position($value) {
 function mvpclub_generate_statistik_table($json) {
     $rows = json_decode($json, true);
     if (!is_array($rows) || empty($rows)) return '';
-    $styles = get_option('mvpclub_statistik_styles', array(
-        'header_bg'   => '#333333',
+
+    $defaults = array(
+        'header_bg'   => '#111111',
         'header_text' => '#ffffff',
         'border'      => '#cccccc',
-        'odd_bg'      => '#f9f9f9'
-    ));
+        'odd_bg'      => '#f9f9f9',
+        'headers'     => array(
+            'saison'     => 'Saison',
+            'wettbewerb' => 'Wettbewerb',
+            'spiele'     => 'Spiele',
+            'tore'       => 'Tore',
+            'assists'    => 'Assists',
+            'minuten'    => 'Minuten'
+        )
+    );
 
-    $table_style  = 'border-collapse:collapse;border:1px solid ' . esc_attr($styles['border']) . ';';
-    $th_style     = 'background:' . esc_attr($styles['header_bg']) . ';color:' . esc_attr($styles['header_text']) . ';border:1px solid ' . esc_attr($styles['border']) . ';';
-    $td_style     = 'border:1px solid ' . esc_attr($styles['border']) . ';';
+    $styles  = get_option('mvpclub_statistik_styles', array());
+    $styles  = wp_parse_args($styles, $defaults);
+    $styles['headers'] = isset($styles['headers']) && is_array($styles['headers'])
+        ? wp_parse_args($styles['headers'], $defaults['headers']) : $defaults['headers'];
 
-    $html = '<table class="mvpclub-statistik" style="' . $table_style . '"><thead><tr>'
-          . '<th style="' . $th_style . '">Saison</th>'
-          . '<th style="' . $th_style . '">Wettbewerb</th>'
-          . '<th style="' . $th_style . '">Spiele</th>'
-          . '<th style="' . $th_style . '">Tore</th>'
-          . '<th style="' . $th_style . '">Assists</th>'
-          . '<th style="' . $th_style . '">Minuten</th>'
+    $table_style  = 'border-collapse:collapse;border:1px solid ' . esc_attr($styles['border']) . ';width:100%;';
+    $th_style     = 'background:' . esc_attr($styles['header_bg']) . ';color:' . esc_attr($styles['header_text']) . ';border:1px solid ' . esc_attr($styles['border']) . ';text-align:center;';
+    $td_style     = 'border:1px solid ' . esc_attr($styles['border']) . ';text-align:center;';
+
+    $css = '<style>
+    .mvpclub-statistik-wrapper{overflow-x:auto;width:100%;}
+    .mvpclub-statistik tbody tr:nth-child(odd){background:' . esc_attr($styles['odd_bg']) . ';}
+    .mvpclub-statistik tbody tr:hover{background:#e7e7e7;}
+    .mvpclub-statistik td.col-wettbewerb{text-align:left;}
+    @media screen and (max-width:600px){
+        .mvpclub-statistik thead{display:none;}
+        .mvpclub-statistik, .mvpclub-statistik tbody, .mvpclub-statistik tr, .mvpclub-statistik td{display:block;width:100%;}
+        .mvpclub-statistik tr{margin-bottom:1rem;}
+        .mvpclub-statistik td{border:none;border-bottom:1px solid ' . esc_attr($styles['border']) . ';position:relative;padding-left:50%;text-align:left;}
+        .mvpclub-statistik td:before{content:attr(data-label);position:absolute;left:0;width:45%;padding-left:15px;font-weight:bold;}
+    }
+    </style>';
+
+    $headers = $styles['headers'];
+
+    $html = $css . '<div class="mvpclub-statistik-wrapper"><table class="mvpclub-statistik" style="' . $table_style . '"><thead><tr>'
+          . '<th style="' . $th_style . '">' . esc_html($headers['saison']) . '</th>'
+          . '<th style="' . $th_style . '">' . esc_html($headers['wettbewerb']) . '</th>'
+          . '<th style="' . $th_style . '">' . esc_html($headers['spiele']) . '</th>'
+          . '<th style="' . $th_style . '">' . esc_html($headers['tore']) . '</th>'
+          . '<th style="' . $th_style . '">' . esc_html($headers['assists']) . '</th>'
+          . '<th style="' . $th_style . '">' . esc_html($headers['minuten']) . '</th>'
           . '</tr></thead><tbody>';
     $i = 0;
     foreach ($rows as $r) {
-        $row_style = $i % 2 ? 'background:' . esc_attr($styles['odd_bg']) . ';' : '';
-        $html .= '<tr style="' . $row_style . '">'
-              . '<td style="' . $td_style . '">' . esc_html($r['Saison'] ?? '') . '</td>'
-              . '<td style="' . $td_style . '">' . esc_html($r['Wettbewerb'] ?? '') . '</td>'
-              . '<td style="' . $td_style . '">' . esc_html($r['Spiele'] ?? '') . '</td>'
-              . '<td style="' . $td_style . '">' . esc_html($r['Tore'] ?? '') . '</td>'
-              . '<td style="' . $td_style . '">' . esc_html($r['Assists'] ?? '') . '</td>'
-              . '<td style="' . $td_style . '">' . esc_html($r['Minuten'] ?? '') . '</td>'
+        $html .= '<tr>'
+              . '<td style="' . $td_style . '" data-label="' . esc_attr($headers['saison']) . '">' . esc_html($r['Saison'] ?? '') . '</td>'
+              . '<td class="col-wettbewerb" style="' . $td_style . '" data-label="' . esc_attr($headers['wettbewerb']) . '">' . esc_html($r['Wettbewerb'] ?? '') . '</td>'
+              . '<td style="' . $td_style . '" data-label="' . esc_attr($headers['spiele']) . '">' . esc_html($r['Spiele'] ?? '') . '</td>'
+              . '<td style="' . $td_style . '" data-label="' . esc_attr($headers['tore']) . '">' . esc_html($r['Tore'] ?? '') . '</td>'
+              . '<td style="' . $td_style . '" data-label="' . esc_attr($headers['assists']) . '">' . esc_html($r['Assists'] ?? '') . '</td>'
+              . '<td style="' . $td_style . '" data-label="' . esc_attr($headers['minuten']) . '">' . esc_html($r['Minuten'] ?? '') . '</td>'
               . '</tr>';
         $i++;
     }
-    $html .= '</tbody></table>';
+    $html .= '</tbody></table></div>';
     return $html;
 }
 
@@ -728,18 +757,38 @@ function mvpclub_render_statistik_settings_page() {
             'header_bg'   => sanitize_hex_color($_POST['header_bg']),
             'header_text' => sanitize_hex_color($_POST['header_text']),
             'border'      => sanitize_hex_color($_POST['border']),
-            'odd_bg'      => sanitize_hex_color($_POST['odd_bg'])
+            'odd_bg'      => sanitize_hex_color($_POST['odd_bg']),
+            'headers'     => array(
+                'saison'     => sanitize_text_field($_POST['header_saison']),
+                'wettbewerb' => sanitize_text_field($_POST['header_wettbewerb']),
+                'spiele'     => sanitize_text_field($_POST['header_spiele']),
+                'tore'       => sanitize_text_field($_POST['header_tore']),
+                'assists'    => sanitize_text_field($_POST['header_assists']),
+                'minuten'    => sanitize_text_field($_POST['header_minuten']),
+            )
         );
         update_option('mvpclub_statistik_styles', $styles);
         echo '<div class="updated"><p>Einstellungen gespeichert.</p></div>';
     }
 
-    $styles = get_option('mvpclub_statistik_styles', array(
-        'header_bg'   => '#333333',
+    $default_styles = array(
+        'header_bg'   => '#111111',
         'header_text' => '#ffffff',
         'border'      => '#cccccc',
-        'odd_bg'      => '#f9f9f9'
-    ));
+        'odd_bg'      => '#f9f9f9',
+        'headers'     => array(
+            'saison'     => 'Saison',
+            'wettbewerb' => 'Wettbewerb',
+            'spiele'     => 'Spiele',
+            'tore'       => 'Tore',
+            'assists'    => 'Assists',
+            'minuten'    => 'Minuten'
+        )
+    );
+
+    $styles = get_option('mvpclub_statistik_styles', array());
+    $styles = wp_parse_args($styles, $default_styles);
+    $styles['headers'] = isset($styles['headers']) && is_array($styles['headers']) ? wp_parse_args($styles['headers'], $default_styles['headers']) : $default_styles['headers'];
 
     $player = get_posts(array(
         'title'       => 'Ardon Jashari',
@@ -773,6 +822,30 @@ function mvpclub_render_statistik_settings_page() {
                     <th scope="row"><label for="odd_bg">Zeilenfarbe (ungerade)</label></th>
                     <td><input type="color" name="odd_bg" id="odd_bg" value="<?php echo esc_attr($styles['odd_bg']); ?>" /></td>
                 </tr>
+                <tr>
+                    <th scope="row"><label for="header_saison">Spaltenname Saison</label></th>
+                    <td><input type="text" name="header_saison" id="header_saison" value="<?php echo esc_attr($styles['headers']['saison']); ?>" class="regular-text" /></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="header_wettbewerb">Spaltenname Wettbewerb</label></th>
+                    <td><input type="text" name="header_wettbewerb" id="header_wettbewerb" value="<?php echo esc_attr($styles['headers']['wettbewerb']); ?>" class="regular-text" /></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="header_spiele">Spaltenname Spiele</label></th>
+                    <td><input type="text" name="header_spiele" id="header_spiele" value="<?php echo esc_attr($styles['headers']['spiele']); ?>" class="regular-text" /></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="header_tore">Spaltenname Tore</label></th>
+                    <td><input type="text" name="header_tore" id="header_tore" value="<?php echo esc_attr($styles['headers']['tore']); ?>" class="regular-text" /></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="header_assists">Spaltenname Assists</label></th>
+                    <td><input type="text" name="header_assists" id="header_assists" value="<?php echo esc_attr($styles['headers']['assists']); ?>" class="regular-text" /></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="header_minuten">Spaltenname Minuten</label></th>
+                    <td><input type="text" name="header_minuten" id="header_minuten" value="<?php echo esc_attr($styles['headers']['minuten']); ?>" class="regular-text" /></td>
+                </tr>
             </table>
             <?php submit_button('Speichern'); ?>
         </form>
@@ -791,20 +864,39 @@ function mvpclub_render_statistik_settings_page() {
             var ht = document.getElementById('header_text').value;
             var b  = document.getElementById('border').value;
             var ob = document.getElementById('odd_bg').value;
+            var hs = document.getElementById('header_saison').value;
+            var hw = document.getElementById('header_wettbewerb').value;
+            var hsp = document.getElementById('header_spiele').value;
+            var hto = document.getElementById('header_tore').value;
+            var has = document.getElementById('header_assists').value;
+            var hmi = document.getElementById('header_minuten').value;
             table.style.border = '1px solid '+b;
-            table.querySelectorAll('th').forEach(function(th){
+            var heads = [hs, hw, hsp, hto, has, hmi];
+            table.querySelectorAll('thead th').forEach(function(th, i){
                 th.style.background = hb;
                 th.style.color = ht;
                 th.style.border = '1px solid '+b;
+                th.textContent = heads[i];
             });
-            table.querySelectorAll('td').forEach(function(td){
+            table.querySelectorAll('tbody td').forEach(function(td){
                 td.style.border = '1px solid '+b;
             });
             table.querySelectorAll('tbody tr:nth-child(odd)').forEach(function(tr){
                 tr.style.background = ob;
             });
+            table.querySelectorAll('tbody tr').forEach(function(tr){
+                var tds = tr.children;
+                if(tds.length>=6){
+                    tds[0].setAttribute('data-label', hs);
+                    tds[1].setAttribute('data-label', hw);
+                    tds[2].setAttribute('data-label', hsp);
+                    tds[3].setAttribute('data-label', hto);
+                    tds[4].setAttribute('data-label', has);
+                    tds[5].setAttribute('data-label', hmi);
+                }
+            });
         }
-        document.querySelectorAll('#header_bg,#header_text,#border,#odd_bg').forEach(function(el){
+        document.querySelectorAll('#header_bg,#header_text,#border,#odd_bg,#header_saison,#header_wettbewerb,#header_spiele,#header_tore,#header_assists,#header_minuten').forEach(function(el){
             el.addEventListener('input', update);
         });
         update();
