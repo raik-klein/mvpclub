@@ -31,6 +31,51 @@ jQuery(function($){
         $(this).closest('tr').remove();
     });
 
+    function characteristicSelect(type, name){
+        var select = $('<select name="'+name+'[]">').append('<option value=""></option>');
+        if(window.mvpclubPlayerAdmin && window.mvpclubPlayerAdmin.characteristics){
+            var list = window.mvpclubPlayerAdmin.characteristics[type] || [];
+            list.forEach(function(item){
+                var optgroup = $('<optgroup>').attr('label', item.main);
+                optgroup.append('<option value="'+item.main+'">'+item.main+'</option>');
+                if(Array.isArray(item.subs)){
+                    item.subs.forEach(function(s){
+                        optgroup.append('<option value="'+s+'">'+s+'</option>');
+                    });
+                }
+                select.append(optgroup);
+            });
+        }
+        return select;
+    }
+
+    function addCharacteristicRow(list, type, name){
+        var row = $('<li>').append(characteristicSelect(type, name))
+            .append(' <button class="button remove-characteristic">X</button>');
+        $(list).append(row);
+    }
+
+    $(document).on('click', '#add-strength', function(e){
+        e.preventDefault();
+        var type = $('#position').val()==='Tor' ? 'Tor' : 'Feldspieler';
+        addCharacteristicRow('#mvpclub-strengths-list', type, 'strengths');
+    });
+
+    $(document).on('click', '#add-weakness', function(e){
+        e.preventDefault();
+        var type = $('#position').val()==='Tor' ? 'Tor' : 'Feldspieler';
+        addCharacteristicRow('#mvpclub-weaknesses-list', type, 'weaknesses');
+    });
+
+    $(document).on('click', '.remove-characteristic', function(e){
+        e.preventDefault();
+        $(this).parent().remove();
+    });
+
+    if($.fn.sortable){
+        $('#mvpclub-strengths-list, #mvpclub-weaknesses-list').sortable({items:'li'});
+    }
+
     var radarChart;
     function adjustRadarSize(){
         var canvas = $('#mvpclub-radar-preview');
