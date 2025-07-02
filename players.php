@@ -124,6 +124,16 @@ function mvpclub_player_admin_scripts($hook) {
         array(),
         filemtime(plugin_dir_path(__FILE__) . 'assets/nationality-autocomplete.css')
     );
+
+    wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js');
+
+    wp_enqueue_script(
+        'mvpclub-radar-preview',
+        plugins_url('assets/radar-preview.js', __FILE__),
+        array('jquery', 'chartjs'),
+        filemtime(plugin_dir_path(__FILE__) . 'assets/radar-preview.js'),
+        true
+    );
 }
 
 function mvpclub_player_meta_box($post) {
@@ -143,6 +153,7 @@ function mvpclub_player_meta_box($post) {
                 echo '<td><input type="range" name="radar_chart_value' . $i . '" min="0" max="100" value="' . esc_attr($v) . '" oninput="this.nextElementSibling.value=this.value" />';
                 echo '<output>' . esc_html($v) . '</output></td></tr>';
             }
+            echo '<tr><td colspan="2"><canvas id="mvpclub_radar_preview"></canvas></td></tr>';
         } else {
             echo '<tr><th><label for="' . esc_attr($key) . '">' . esc_html($label) . '</label></th>';
             echo '<td><input type="text" name="' . esc_attr($key) . '" id="' . esc_attr($key) . '" value="' . esc_attr($value) . '" class="regular-text" /></td></tr>';
