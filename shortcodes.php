@@ -45,3 +45,14 @@ add_shortcode('ad', function() {
     <?php
     return ob_get_clean();
 });
+
+add_shortcode('bewertung', function($atts = []) {
+    $atts = shortcode_atts(['id' => null], $atts);
+    $rating = null;
+    $post_id = $atts['id'] ? intval($atts['id']) : get_the_ID();
+    if ($post_id) {
+        $rating = get_post_meta($post_id, 'rating', true);
+    }
+    return $rating !== '' ? esc_html($rating) : '';
+});
+

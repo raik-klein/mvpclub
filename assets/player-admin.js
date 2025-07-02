@@ -24,7 +24,7 @@ jQuery(function($){
     var ctx = document.getElementById('mvpclub-radar-preview');
     var radarChart;
     function renderRadar(){
-        if(!ctx){return;}
+        if(!ctx || typeof Chart === 'undefined'){return;}
         var labels=[], data=[];
         for(var i=0;i<6;i++){
             labels.push($('[name="radar_chart_label'+i+'"]').val());

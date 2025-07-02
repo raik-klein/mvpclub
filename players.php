@@ -71,7 +71,6 @@ function mvpclub_player_fields() {
         'position'         => 'Position',
         'detail_position'  => 'Detailposition',
         'foot'             => 'Fuß',
-        'agent'            => 'Berater',
         'club'             => 'Verein',
         'market_value'     => 'Marktwert',
         'rating'           => 'Bewertung',
@@ -201,7 +200,16 @@ function mvpclub_player_meta_box($post) {
 
     // Information Tab
     echo '<div id="tab-info" class="mvpclub-tab-content active"><table class="form-table">';
-    $info_keys = array('birthdate','birthplace','height','nationality','position','detail_position','foot','agent','club','market_value','image');
+    $info_keys = array('birthdate','nationality','birthplace','position','detail_position','height','foot','club','market_value','image');
+
+    $age_text = '';
+    if (!empty($values['birthdate'])) {
+        $d = DateTime::createFromFormat('d.m.Y', $values['birthdate']);
+        if ($d) {
+            $age_text = (new DateTime())->diff($d)->y . ' Jahre';
+        }
+    }
+    echo '<tr><th>Alter</th><td>' . esc_html($age_text) . '</td></tr>';
     foreach ($info_keys as $key) {
         $label = $fields[$key];
         $value = isset($values[$key]) ? $values[$key] : '';
@@ -230,6 +238,16 @@ function mvpclub_player_meta_box($post) {
             echo '<option value="">-</option>';
             foreach ($options as $op) {
                 $sel = $op === $side2 ? ' selected' : '';
+                echo '<option value="' . esc_attr($op) . '"' . $sel . '>' . esc_html($op) . '</option>';
+            }
+            echo '</select></td></tr>';
+        } elseif ($key === 'position') {
+            $options = array('Tor','Abwehr','Mittelfeld','Sturm');
+            echo '<tr><th><label for="position">' . esc_html($label) . '</label></th><td>';
+            echo '<select name="position" id="position">';
+            echo '<option value="">-</option>';
+            foreach ($options as $op) {
+                $sel = $op === $value ? ' selected' : '';
                 echo '<option value="' . esc_attr($op) . '"' . $sel . '>' . esc_html($op) . '</option>';
             }
             echo '</select></td></tr>';
@@ -388,9 +406,9 @@ function mvpclub_render_scout_settings_page() {
         '[nationalitaet]' => 'Deutsch',
         '[position]'      => 'Stürmer',
         '[fuss]'          => 'rechts',
-        '[berater]'       => 'Musterberater',
         '[verein]'        => 'FC Beispiel',
         '[detail_position]' => 'OM (ZM / DM)',
+        '[bewertung]'     => '4.0',
         '[radar_chart]'   => 'Radar-Beispiel',
     );
 
@@ -505,9 +523,9 @@ function mvpclub_render_player_info($attributes) {
         '[nationalitaet]' => isset($data['nationality']) ? $data['nationality'] : '',
         '[position]'      => isset($data['position']) ? $data['position'] : '',
         '[fuss]'          => isset($data['foot']) ? $data['foot'] : '',
-        '[berater]'       => isset($data['agent']) ? $data['agent'] : '',
         '[verein]'        => isset($data['club']) ? $data['club'] : '',
         '[detail_position]' => mvpclub_format_detail_position(isset($data['detail_position']) ? $data['detail_position'] : ''),
+        '[bewertung]'     => isset($data['rating']) ? $data['rating'] : '',
         '[radar_chart]'   => 'Radar-Beispiel',
         '[bild]'          => $img,
         '[radar_chart]'   => $chart_html,
