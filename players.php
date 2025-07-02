@@ -332,28 +332,46 @@ function mvpclub_render_player_info($attributes) {
     $bg    = get_option('mvpclub_player_bg_color', '#f9f9f9');
     $text  = get_option('mvpclub_player_text_color', '#000000');
 
-    ob_start();
-    echo '<div class="mvpclub-player-info" style="background:' . esc_attr($bg) . ';color:' . esc_attr($text) . ';padding:1em;">';
-    if ($img) echo '<div class="mvpclub-player-image">' . $img . '</div>';
-    echo '<h2 class="mvpclub-player-name">' . esc_html($title) . '</h2>';
-    echo '<ul class="mvpclub-player-data">';
-    foreach ($fields as $key => $label) {
-        if (!empty($data[$key])) {
-            echo '<li><strong>' . esc_html($label) . ':</strong> ' . esc_html($data[$key]) . '</li>';
-        }
-    }
-    echo '</ul>';
+    $template = get_option('mvpclub_scout_template', '<p>[spieler-name] - [verein]</p>');
 
+    $chart_html = '';
     if (!empty($data['radar_chart'])) {
         $chart = json_decode($data['radar_chart'], true);
         if (!empty($chart['labels']) && !empty($chart['values'])) {
             $chart_id = 'radar-chart-' . $player_id;
-            echo '<canvas id="' . esc_attr($chart_id) . '" width="300" height="300"></canvas>';
+            $chart_html = '<canvas id="' . esc_attr($chart_id) . '" width="300" height="300"></canvas>';
             wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js');
             $inline  = 'document.addEventListener("DOMContentLoaded",function(){var c=document.getElementById("' . esc_js($chart_id) . '");if(c){new Chart(c,{type:"radar",data:{labels:' . wp_json_encode($chart['labels']) . ',datasets:[{label:"' . esc_js($title) . '",data:' . wp_json_encode($chart['values']) . ',backgroundColor:"rgba(54,162,235,0.2)",borderColor:"rgba(54,162,235,1)"}]},options:{scales:{r:{min:0,max:100,beginAtZero:true}}});}});';
             wp_add_inline_script('chartjs', $inline);
         }
     }
+
+    $placeholders = array(
+        '[spieler-name]'  => $title,
+        '[geburtsdatum]'  => isset($data['birthdate']) ? $data['birthdate'] : '',
+        '[geburtsort]'    => isset($data['birthplace']) ? $data['birthplace'] : '',
+        '[groesse]'       => isset($data['height']) ? $data['height'] : '',
+        '[nationalitaet]' => isset($data['nationality']) ? $data['nationality'] : '',
+        '[position]'      => isset($data['position']) ? $data['position'] : '',
+        '[fuss]'          => isset($data['foot']) ? $data['foot'] : '',
+        '[berater]'       => isset($data['agent']) ? $data['agent'] : '',
+        '[verein]'        => isset($data['club']) ? $data['club'] : '',
+        '[bild]'          => $img,
+        '[radar_chart]'   => $chart_html,
+    );
+
+    foreach ($placeholders as $tag => $val) {
+        if ($tag !== '[bild]' && $tag !== '[radar_chart]') {
+            $placeholders[$tag] = esc_html($val);
+        }
+    }
+
+    $content = str_replace(array_keys($placeholders), array_values($placeholders), $template);
+    $content = wpautop($content);
+
+    ob_start();
+    echo '<div class="mvpclub-player-info" style="background:' . esc_attr($bg) . ';color:' . esc_attr($text) . ';padding:1em;">';
+    echo $content;
     echo '</div>';
     return ob_get_clean();
 }
