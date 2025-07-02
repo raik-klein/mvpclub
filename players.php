@@ -27,10 +27,10 @@ function mvpclub_player_fields() {
     return array(
         'birthdate'   => 'Geburtsdatum',
         'birthplace'  => 'Geburtsort',
-        'height'      => 'Gr\xC3\xB6\xC3\x9Fe',
-        'nationality' => 'Nationalit\xC3\xA4t',
+        'height'      => 'Größe',
+        'nationality' => 'Nationalität',
         'position'    => 'Position',
-        'foot'        => 'F\xC3\xBC\xC3\x9F',
+        'foot'        => 'Fuß',
         'agent'       => 'Berater',
         'club'        => 'Verein',
     );
