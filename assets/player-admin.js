@@ -99,4 +99,19 @@ jQuery(function($){
         $(this).next('output').text(this.value + ' cm');
     });
     $('#height').trigger('input');
+
+    if (typeof inlineEditPost !== 'undefined') {
+        var wp_inline_edit = inlineEditPost.edit;
+        inlineEditPost.edit = function(id) {
+            wp_inline_edit.apply(this, arguments);
+            var postId = typeof id === 'object' ? this.getId(id) : id;
+            var row = $('#post-' + postId);
+            var editRow = $('#edit-' + postId);
+            ['birthdate','birthplace','height','nationality','position','detail_position','foot','club','market_value'].forEach(function(key){
+                var val = row.find('.column-' + key).text().trim();
+                if(key==='height'){ val = val.replace(/[^0-9]/g,''); }
+                editRow.find('input[name="'+key+'"]').val(val);
+            });
+        };
+    }
 });

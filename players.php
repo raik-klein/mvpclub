@@ -526,8 +526,11 @@ function mvpclub_player_meta_box($post) {
  */
 add_action('save_post_mvpclub-spieler', function($post_id) {
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
-    if (!isset($_POST['mvpclub_player_nonce']) || !wp_verify_nonce($_POST['mvpclub_player_nonce'], 'mvpclub_save_player')) return;
     if (!current_user_can('edit_post', $post_id)) return;
+    $is_quick = isset($_POST['_inline_edit']);
+    if (!$is_quick) {
+        if (!isset($_POST['mvpclub_player_nonce']) || !wp_verify_nonce($_POST['mvpclub_player_nonce'], 'mvpclub_save_player')) return;
+    }
 
     foreach (mvpclub_player_fields() as $key => $label) {
         if ($key === 'radar_chart') {
@@ -565,9 +568,18 @@ add_action('save_post_mvpclub-spieler', function($post_id) {
                 }
             }
         } elseif ($key === 'detail_position') {
-            if (isset($_POST['detail_position']) && is_array($_POST['detail_position'])) {
-                $val = implode(',', array_map('sanitize_text_field', $_POST['detail_position']));
-                update_post_meta($post_id, 'detail_position', $val);
+            if (isset($_POST['detail_position'])) {
+                $val = $_POST['detail_position'];
+                if (is_array($val)) {
+                    $val = implode(',', array_map('sanitize_text_field', $val));
+                } else {
+                    $val = sanitize_text_field($val);
+                }
+                if ($val !== '') {
+                    update_post_meta($post_id, 'detail_position', $val);
+                } else {
+                    delete_post_meta($post_id, 'detail_position');
+                }
             } else {
                 delete_post_meta($post_id, 'detail_position');
             }
@@ -966,6 +978,8 @@ function mvpclub_player_custom_column($column, $post_id) {
             } else {
                 echo get_the_post_thumbnail($post_id, 'thumbnail');
             }
+        } elseif ($column === 'detail_position') {
+            echo esc_html(mvpclub_format_detail_position(get_post_meta($post_id, 'detail_position', true)));
         } else {
             echo esc_html(get_post_meta($post_id, $column, true));
         }
@@ -988,3 +1002,22 @@ add_action('pre_get_posts', function($query){
         $query->set('orderby', 'modified');
     }
 });
+
+add_action('quick_edit_custom_box', 'mvpclub_player_quick_edit_box', 10, 2);
+function mvpclub_player_quick_edit_box($column_name, $post_type) {
+    if ($post_type !== 'mvpclub-spieler' || $column_name !== 'title') return;
+    $info = mvpclub_player_info_keys();
+    $fields = mvpclub_player_fields();
+    ?>
+    <fieldset class="inline-edit-col-left">
+        <div class="inline-edit-col">
+            <?php foreach ($info as $key) { if ($key === 'image') continue; ?>
+            <label>
+                <span class="title"><?php echo esc_html($fields[$key]); ?></span>
+                <span class="input-text-wrap"><input type="text" name="<?php echo esc_attr($key); ?>" /></span>
+            </label><br />
+            <?php } ?>
+        </div>
+    </fieldset>
+    <?php
+}
