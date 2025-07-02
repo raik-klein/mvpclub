@@ -690,7 +690,6 @@ function mvpclub_render_player_info($attributes) {
     $placeholders = mvpclub_player_placeholders($player_id);
 
     $content = str_replace(array_keys($placeholders), array_values($placeholders), $code);
-    $content = force_balance_tags( wp_kses_post( $content ) );
     ob_start();
     echo '<div class="mvpclub-player-info" style="color:' . esc_attr($text) . ';padding:1em;">';
     echo $content;
