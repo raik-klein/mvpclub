@@ -82,6 +82,16 @@ function mvpclub_player_fields() {
 }
 
 /**
+ * Format detail positions like "OM (ZM / DM)".
+ */
+function mvpclub_format_detail_position($value) {
+    $parts = array_filter(array_map('trim', explode(',', $value)));
+    if (empty($parts)) return '';
+    $main = array_shift($parts);
+    return $parts ? $main . ' (' . implode(' / ', $parts) . ')' : $main;
+}
+
+/**
  * Register meta fields so they appear in the REST API
  */
 add_action('init', function() {
@@ -155,6 +165,21 @@ function mvpclub_player_admin_scripts($hook) {
         filemtime(plugin_dir_path(__FILE__) . 'assets/chart.js'),
         true
     );
+
+    wp_enqueue_script(
+        'mvpclub-player-admin',
+        plugins_url('assets/player-admin.js', __FILE__),
+        array('jquery', 'chartjs'),
+        filemtime(plugin_dir_path(__FILE__) . 'assets/player-admin.js'),
+        true
+    );
+
+    wp_enqueue_style(
+        'mvpclub-player-admin',
+        plugins_url('assets/admin-player.css', __FILE__),
+        array(),
+        filemtime(plugin_dir_path(__FILE__) . 'assets/admin-player.css')
+    );
 }
 
 function mvpclub_player_meta_box($post) {
@@ -166,17 +191,45 @@ function mvpclub_player_meta_box($post) {
         $values[$k] = get_post_meta($post->ID, $k, true);
     }
 
-    echo '<h2>Information</h2><table class="form-table">';
+    echo '<div id="mvpclub-player-tabs">';
+    echo '<h2 class="nav-tab-wrapper">';
+    echo '<a href="#" class="nav-tab nav-tab-active" data-tab="info">Information</a>';
+    echo '<a href="#" class="nav-tab" data-tab="rating">Bewertung</a>';
+    echo '<a href="#" class="nav-tab" data-tab="performance">Leistungsdaten</a>';
+    echo '<a href="#" class="nav-tab" data-tab="radar">Radar</a>';
+    echo '</h2>';
+
+    // Information Tab
+    echo '<div id="tab-info" class="mvpclub-tab-content active"><table class="form-table">';
     $info_keys = array('birthdate','birthplace','height','nationality','position','detail_position','foot','agent','club','market_value','image');
     foreach ($info_keys as $key) {
         $label = $fields[$key];
         $value = isset($values[$key]) ? $values[$key] : '';
         if ($key === 'detail_position') {
             $selected = $value ? explode(',', $value) : array();
-            $options = array('TW','LV','IV','RV','DM','ZM','OM','LA','RA','ST');
-            echo '<tr><th><label for="detail_position">' . esc_html($label) . '</label></th><td><select name="detail_position[]" id="detail_position" multiple size="5">';
+            $options  = array('TW','LV','IV','RV','DM','ZM','OM','LA','RA','ST');
+            $main  = isset($selected[0]) ? $selected[0] : '';
+            $side1 = isset($selected[1]) ? $selected[1] : '';
+            $side2 = isset($selected[2]) ? $selected[2] : '';
+            echo '<tr><th><label>' . esc_html($label) . '</label></th><td>';
+            echo '<select name="detail_position[]" class="mvpclub-main-position">';
+            echo '<option value="">-</option>';
             foreach ($options as $op) {
-                $sel = in_array($op, $selected) ? ' selected' : '';
+                $sel = $op === $main ? ' selected' : '';
+                echo '<option value="' . esc_attr($op) . '"' . $sel . '>' . esc_html($op) . '</option>';
+            }
+            echo '</select> ';
+            echo '<select name="detail_position[]">';
+            echo '<option value="">-</option>';
+            foreach ($options as $op) {
+                $sel = $op === $side1 ? ' selected' : '';
+                echo '<option value="' . esc_attr($op) . '"' . $sel . '>' . esc_html($op) . '</option>';
+            }
+            echo '</select> ';
+            echo '<select name="detail_position[]">';
+            echo '<option value="">-</option>';
+            foreach ($options as $op) {
+                $sel = $op === $side2 ? ' selected' : '';
                 echo '<option value="' . esc_attr($op) . '"' . $sel . '>' . esc_html($op) . '</option>';
             }
             echo '</select></td></tr>';
@@ -198,17 +251,18 @@ function mvpclub_player_meta_box($post) {
             echo '<td><input type="text" name="' . esc_attr($key) . '" id="' . esc_attr($key) . '" value="' . esc_attr($value) . '" class="regular-text" /></td></tr>';
         }
     }
-    echo '</table>';
+    echo '</table></div>';
 
-    echo '<h2>Bewertung</h2><table class="form-table">';
-    $rating = isset($values['rating']) ? $values['rating'] : '';
+    // Rating Tab
+    echo '<div id="tab-rating" class="mvpclub-tab-content"><table class="form-table">';
+    $rating = isset($values['rating']) && $values['rating'] !== '' ? $values['rating'] : '3.0';
     echo '<tr><th><label for="rating">' . esc_html($fields['rating']) . '</label></th><td><input type="range" name="rating" id="rating" min="1" max="5" step="0.5" value="' . esc_attr($rating) . '" oninput="this.nextElementSibling.value=this.value" /> <output>' . esc_html($rating) . '</output></td></tr>';
-    echo '</table>';
+    echo '</table></div>';
 
-    echo '<h2>Leistungsdaten</h2>';
+    // Performance Tab
+    echo '<div id="tab-performance" class="mvpclub-tab-content"><table id="performance-data-table" class="widefat"><thead><tr><th>Saison</th><th>Wettbewerb</th><th>Spiele</th><th>Tore</th><th>Assists</th><th>Minuten</th><th></th></tr></thead><tbody>';
     $perf = json_decode($values['performance_data'], true);
     if (!is_array($perf)) { $perf = array(); }
-    echo '<table id="performance-data-table" class="widefat"><thead><tr><th>Saison</th><th>Wettbewerb</th><th>Spiele</th><th>Tore</th><th>Assists</th><th>Minuten</th><th></th></tr></thead><tbody>';
     foreach ($perf as $row) {
         echo '<tr>';
         echo '<td><input type="text" name="perf_saison[]" value="' . esc_attr($row['Saison'] ?? '') . '" /></td>';
@@ -221,9 +275,10 @@ function mvpclub_player_meta_box($post) {
         echo '</tr>';
     }
     echo '</tbody></table>';
-    echo '<p><button type="button" class="button" id="add-performance-row">Zeile hinzufügen</button></p>';
+    echo '<p><button type="button" class="button" id="add-performance-row">Zeile hinzufügen</button></p></div>';
 
-    echo '<h2>Radar</h2><table class="form-table">';
+    // Radar Tab
+    echo '<div id="tab-radar" class="mvpclub-tab-content"><table class="form-table">';
     $chart = json_decode($values['radar_chart'], true);
     $labels = isset($chart['labels']) ? (array) $chart['labels'] : array_fill(0, 6, '');
     $values_radar = isset($chart['values']) ? (array) $chart['values'] : array_fill(0, 6, 0);
@@ -235,46 +290,9 @@ function mvpclub_player_meta_box($post) {
         echo '<output>' . esc_html($v) . '</output></td></tr>';
     }
     echo '<tr><td colspan="2"><canvas id="mvpclub-radar-preview" width="300" height="300"></canvas></td></tr>';
-    echo '</table>';
+    echo '</table></div>';
 
-    ?>
-    <script>
-    jQuery(function($){
-        $('#add-performance-row').on('click', function(e){
-            e.preventDefault();
-            var row = $('<tr>\
-                <td><input type="text" name="perf_saison[]" /></td>\
-                <td><input type="text" name="perf_competition[]" /></td>\
-                <td><input type="number" name="perf_games[]" /></td>\
-                <td><input type="number" name="perf_goals[]" /></td>\
-                <td><input type="number" name="perf_assists[]" /></td>\
-                <td><input type="number" name="perf_minutes[]" /></td>\
-                <td><button class="button remove-performance-row">X</button></td>\
-            </tr>');
-            $('#performance-data-table tbody').append(row);
-        });
-        $(document).on('click', '.remove-performance-row', function(e){
-            e.preventDefault();
-            $(this).closest('tr').remove();
-        });
-
-        var ctx = document.getElementById('mvpclub-radar-preview');
-        var radarChart;
-        function renderRadar(){
-            if(!ctx){return;}
-            var labels = [], data = [];
-            for(var i=0;i<6;i++){
-                labels.push($('[name="radar_chart_label'+i+'"]').val());
-                data.push(parseInt($('[name="radar_chart_value'+i+'"]').val()) || 0);
-            }
-            if(radarChart){radarChart.destroy();}
-            radarChart = new Chart(ctx,{type:'radar',data:{labels:labels,datasets:[{label:'Werte',data:data,backgroundColor:'rgba(54,162,235,0.2)',borderColor:'rgba(54,162,235,1)'}]},options:{scales:{r:{min:0,max:100,beginAtZero:true}}});
-        }
-        $('[name^="radar_chart_label"], [name^="radar_chart_value"]').on('input', renderRadar);
-        renderRadar();
-    });
-    </script>
-    <?php
+    echo '</div>'; // end tabs
 }
 
 /**
@@ -372,6 +390,7 @@ function mvpclub_render_scout_settings_page() {
         '[fuss]'          => 'rechts',
         '[berater]'       => 'Musterberater',
         '[verein]'        => 'FC Beispiel',
+        '[detail_position]' => 'OM (ZM / DM)',
         '[radar_chart]'   => 'Radar-Beispiel',
     );
 
@@ -488,6 +507,7 @@ function mvpclub_render_player_info($attributes) {
         '[fuss]'          => isset($data['foot']) ? $data['foot'] : '',
         '[berater]'       => isset($data['agent']) ? $data['agent'] : '',
         '[verein]'        => isset($data['club']) ? $data['club'] : '',
+        '[detail_position]' => mvpclub_format_detail_position(isset($data['detail_position']) ? $data['detail_position'] : ''),
         '[radar_chart]'   => 'Radar-Beispiel',
         '[bild]'          => $img,
         '[radar_chart]'   => $chart_html,
