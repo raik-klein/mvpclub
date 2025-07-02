@@ -76,3 +76,20 @@ add_shortcode('spielstil', function($atts = []) {
     return $val !== '' ? esc_html($val) : '';
 });
 
+add_shortcode('radar', function($atts = []) {
+    $atts = shortcode_atts(['id' => null], $atts);
+    $post_id = $atts['id'] ? intval($atts['id']) : get_the_ID();
+    if (!$post_id) return '';
+    $json = get_post_meta($post_id, 'radar_chart', true);
+    $chart = json_decode($json, true);
+    if (empty($chart['labels']) || empty($chart['values'])) return '';
+    $chart_id = 'radar-chart-' . $post_id . '-' . wp_rand(1, 9999);
+    $chart_src = plugins_url('assets/chart.js', __FILE__);
+    ob_start();
+    ?>
+    <canvas id="<?php echo esc_attr($chart_id); ?>" width="300" height="300"></canvas>
+    <script>(function(){function r(){var c=document.getElementById("<?php echo esc_js($chart_id); ?>");if(!c||typeof Chart==="undefined")return;new Chart(c,{type:"radar",data:{labels:<?php echo wp_json_encode($chart['labels']); ?>,datasets:[{label:"<?php echo esc_js(get_the_title($post_id)); ?>",data:<?php echo wp_json_encode($chart['values']); ?>,backgroundColor:"rgba(54,162,235,0.2)",borderColor:"rgba(54,162,235,1)"}]},options:{scales:{r:{min:0,max:100,beginAtZero:true}}});}if(typeof Chart==="undefined"){var s=document.createElement("script");s.src="<?php echo esc_url($chart_src); ?>";s.onload=r;document.body.appendChild(s);}else{r();}})();</script>
+    <?php
+    return ob_get_clean();
+});
+

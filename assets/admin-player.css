@@ -16,3 +16,5 @@
 #birthplace_city{width:21em;}
 .mvpclub-birthdate-wrap{display:flex;align-items:center;width:25em;gap:0.5em;}
 .mvpclub-birthdate-wrap input{width:8em;}
+.wp-list-table .column-image{width:20px;}
+.wp-list-table .column-image img{width:16px;height:auto;}
