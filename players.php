@@ -1011,12 +1011,12 @@ function mvpclub_characteristics_section($wrap = false) {
                                 <?php endforeach; ?>
                             </select>
                         </td>
-                        <td><button class="button mvpclub-delete-attr">X</button><input type="hidden" name="attr_delete[<?php echo esc_attr($grp); ?>][<?php echo $id; ?>]" value="" class="attr-delete" /></td>
+                        <td><button type="button" class="button mvpclub-delete-attr">X</button><input type="hidden" name="attr_delete[<?php echo esc_attr($grp); ?>][<?php echo $id; ?>]" value="" class="attr-delete" /></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
             </table>
-            <p><button class="button mvpclub-add-attr" data-group="<?php echo esc_attr($grp); ?>">Hinzufügen</button></p>
+            <p><button type="button" class="button mvpclub-add-attr" data-group="<?php echo esc_attr($grp); ?>">Hinzufügen</button></p>
         <?php endforeach; ?>
         <?php submit_button('Speichern'); ?>
     </form>
@@ -1025,7 +1025,7 @@ function mvpclub_characteristics_section($wrap = false) {
             <td class="attr-id"></td>
             <td><input type="text" class="regular-text attr-name" /></td>
             <td><select class="attr-parent"><option value="0">-</option></select></td>
-            <td><button class="button mvpclub-delete-attr">X</button><input type="hidden" class="attr-delete" /></td>
+            <td><button type="button" class="button mvpclub-delete-attr">X</button><input type="hidden" class="attr-delete" /></td>
         </tr>
     </script>
     <?php
