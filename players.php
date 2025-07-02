@@ -902,6 +902,16 @@ function mvpclub_render_player_info($attributes) {
     $placeholders = mvpclub_player_placeholders($player_id);
 
     $content = str_replace(array_keys($placeholders), array_values($placeholders), $code);
+
+    $post_obj = get_post($player_id);
+    if ($post_obj) {
+        setup_postdata($post_obj);
+        $content = do_shortcode($content);
+        wp_reset_postdata();
+    } else {
+        $content = do_shortcode($content);
+    }
+
     ob_start();
     echo '<div class="mvpclub-player-info" style="color:' . esc_attr($text) . ';padding:1em;">';
     echo $content;
@@ -927,6 +937,16 @@ function mvpclub_ajax_preview_code() {
 
     $placeholders = mvpclub_player_placeholders($player_id);
     $content      = str_replace(array_keys($placeholders), array_values($placeholders), $code);
+
+    $post_obj = get_post($player_id);
+    if ($post_obj) {
+        setup_postdata($post_obj);
+        $content = do_shortcode($content);
+        wp_reset_postdata();
+    } else {
+        $content = do_shortcode($content);
+    }
+
     echo $content;
     wp_die();
 }
