@@ -7,14 +7,14 @@ add_action('admin_menu', function () {
         'MVP Zentrale',
         'MVP',
         'edit_posts', // <-- Hier geändert
-        'mvpclub-zentrale',
+        'mvpclub-main',
         'mvpclub_render_zentrale_page',
         'dashicons-star-filled',
         3
     );
 
     add_submenu_page(
-        'mvpclub-zentrale',
+        'mvpclub-main',
         'Scouting-Block',
         'Scouting-Block',
         'edit_posts', // <-- Hier geändert
@@ -23,7 +23,7 @@ add_action('admin_menu', function () {
     );
 
     add_submenu_page(
-        'mvpclub-zentrale',
+        'mvpclub-main',
         'Shortcodes',
         'Shortcodes',
         'edit_posts', // <-- Hier geändert
