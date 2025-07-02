@@ -6,4 +6,6 @@
 #tab-statistik input,#tab-statistik select{width:100%;box-sizing:border-box;}
 #tab-radar .mvpclub-radar-flex{display:flex;justify-content:space-between;align-items:flex-start;}
 #tab-radar .mvpclub-radar-settings{flex:1;margin-right:10px;}
-#mvpclub-radar-preview{display:block;margin-left:auto;}
+#mvpclub-radar-preview{display:block;margin-left:auto;max-width:250px;}
+#birthplace_country.mvpclub-emoji-select{width:4em;}
+#birthplace_city{width:21em;}
