@@ -11,7 +11,7 @@ jQuery(function($){
         $('#performance-data-table tbody').append(row);
     }
 
-    $('#add-performance-row').on('click', function(e){
+    $(document).on('click', '#add-performance-row', function(e){
         e.preventDefault();
         addPerformanceRow();
     });
@@ -21,22 +21,35 @@ jQuery(function($){
         $(this).closest('tr').remove();
     });
 
-    var ctx = document.getElementById('mvpclub-radar-preview');
     var radarChart;
     function renderRadar(){
-        if(!ctx || typeof Chart === 'undefined'){return;}
-        var labels=[], data=[];
+        var canvas = document.getElementById('mvpclub-radar-preview');
+        if(!canvas || typeof Chart === 'undefined') return;
+        var labels = [], data = [];
         for(var i=0;i<6;i++){
             labels.push($('[name="radar_chart_label'+i+'"]').val());
             data.push(parseInt($('[name="radar_chart_value'+i+'"]').val()) || 0);
         }
-        if(radarChart){radarChart.destroy();}
-        radarChart = new Chart(ctx,{type:'radar',data:{labels:labels,datasets:[{label:'Werte',data:data,backgroundColor:'rgba(54,162,235,0.2)',borderColor:'rgba(54,162,235,1)'}]},options:{scales:{r:{min:0,max:100,beginAtZero:true}}});
+        if(radarChart) radarChart.destroy();
+        radarChart = new Chart(canvas, {
+            type:'radar',
+            data:{
+                labels:labels,
+                datasets:[{
+                    label:'Werte',
+                    data:data,
+                    backgroundColor:'rgba(54,162,235,0.2)',
+                    borderColor:'rgba(54,162,235,1)'
+                }]
+            },
+            options:{scales:{r:{min:0,max:100,beginAtZero:true}}}
+        });
     }
-    $('[name^="radar_chart_label"], [name^="radar_chart_value"]').on('input', renderRadar);
+
+    $(document).on('input', '[name^="radar_chart_label"], [name^="radar_chart_value"]', renderRadar);
     renderRadar();
 
-    $('#mvpclub-player-tabs .nav-tab').on('click', function(e){
+    $(document).on('click', '#mvpclub-player-tabs .nav-tab', function(e){
         e.preventDefault();
         var tab = $(this).data('tab');
         $('#mvpclub-player-tabs .nav-tab').removeClass('nav-tab-active');
