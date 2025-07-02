@@ -1,0 +1,21 @@
+.scouting .statistik table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.scouting .statistik th,
+.scouting .statistik td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+}
+.scouting .statistik thead th {
+  background-color: #f2f2f2;
+  font-weight: 600;
+}
+.scouting .statistik th:nth-child(2),
+.scouting .statistik td:nth-child(2) {
+  text-align: left;
+}
+.scouting .statistik tbody tr:hover {
+  background-color: #f2f2f2;
+}
