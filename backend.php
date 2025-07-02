@@ -6,9 +6,9 @@ add_action('admin_menu', function () {
     add_menu_page(
         'MVP Zentrale',
         'MVP',
-        'edit_posts', // <-- Hier geändert
+        'edit_posts',
         'mvpclub-main',
-        'mvpclub_render_zentrale_page',
+        'mvpclub_redirect_to_players',
         'dashicons-star-filled',
         3
     );
@@ -33,8 +33,10 @@ add_action('admin_menu', function () {
 });
 
 // Seiteninhalte
-function mvpclub_render_zentrale_page() {
-    echo '<div class="wrap"><h1>MVP Zentrale</h1><p>Willkommen im mvpclub-Plugin-Bereich.</p></div>';
+// Redirects the top-level "MVP" menu to the player database
+function mvpclub_redirect_to_players() {
+    wp_safe_redirect(admin_url('edit.php?post_type=mvpclub-spieler'));
+    exit;
 }
 
 function mvpclub_render_block_page() {
