@@ -104,7 +104,7 @@ add_action('add_meta_boxes', function() {
 add_action('admin_enqueue_scripts', 'mvpclub_player_admin_scripts');
 function mvpclub_player_admin_scripts($hook) {
     $screen = get_current_screen();
-    if ($screen->post_type !== 'mvpclub_player') return;
+    if ($screen->post_type !== 'mvpclub-spieler') return;
 
     wp_enqueue_script(
         'mvpclub-nationality-autocomplete',
