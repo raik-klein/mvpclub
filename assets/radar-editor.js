@@ -1,4 +1,5 @@
 jQuery(function($){
+    'use strict';
     var ctx = document.getElementById('mvpclub-radar-preview');
     if(!ctx || typeof Chart === 'undefined'){return;}
 
