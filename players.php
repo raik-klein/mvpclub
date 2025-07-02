@@ -480,7 +480,11 @@ add_action('admin_menu', function() {
  */
 function mvpclub_render_scout_settings_page() {
     if (isset($_POST['mvpclub_scout_code']) && check_admin_referer('mvpclub_scout_settings', 'mvpclub_scout_nonce')) {
-        update_option('mvpclub_scout_code', wp_kses_post(wp_unslash($_POST['mvpclub_scout_code'])));
+        $code = wp_unslash($_POST['mvpclub_scout_code']);
+        if (!current_user_can('unfiltered_html')) {
+            $code = wp_kses_post($code);
+        }
+        update_option('mvpclub_scout_code', $code);
         echo '<div class="updated"><p>Einstellungen gespeichert.</p></div>';
     }
 
@@ -505,7 +509,7 @@ function mvpclub_render_scout_settings_page() {
 
     $placeholders = mvpclub_player_placeholders($selected_player);
     $preview_html = str_replace(array_keys($placeholders), array_values($placeholders), $code);
-    $preview      = wpautop($preview_html);
+    $preview      = $preview_html;
     ?>
     <div class="wrap">
         <h1>Scoutingberichte</h1>
@@ -597,8 +601,6 @@ function mvpclub_render_player_info($attributes) {
     $placeholders = mvpclub_player_placeholders($player_id);
 
     $content = str_replace(array_keys($placeholders), array_values($placeholders), $code);
-    $content = wpautop($content);
-
     ob_start();
     echo '<div class="mvpclub-player-info" style="background:' . esc_attr($bg) . ';color:' . esc_attr($text) . ';padding:1em;">';
     echo $content;
@@ -614,14 +616,17 @@ function mvpclub_ajax_preview_code() {
     check_ajax_referer('mvpclub_scout_preview', 'nonce');
 
     $player_id = absint($_POST['playerId']);
-    $code      = wp_kses_post(wp_unslash($_POST['code']));
+    $code      = wp_unslash($_POST['code']);
+    if (!current_user_can('unfiltered_html')) {
+        $code = wp_kses_post($code);
+    }
     if (!$player_id) {
         wp_die('');
     }
 
     $placeholders = mvpclub_player_placeholders($player_id);
     $content      = str_replace(array_keys($placeholders), array_values($placeholders), $code);
-    echo wpautop($content);
+    echo $content;
     wp_die();
 }
 
