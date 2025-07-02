@@ -33,6 +33,7 @@ function mvpclub_player_fields() {
         'foot'        => 'F\xC3\xBC\xC3\x9F',
         'agent'       => 'Berater',
         'club'        => 'Verein',
+        'radar_chart' => 'Radar Chart',
     );
 }
 
@@ -44,7 +45,7 @@ add_action('init', function() {
         register_post_meta('mvpclub_player', $key, array(
             'type'              => 'string',
             'single'            => true,
-            'sanitize_callback' => 'sanitize_text_field',
+            'sanitize_callback' => $key === 'radar_chart' ? null : 'sanitize_text_field',
             'show_in_rest'      => true,
             'auth_callback'     => function() { return current_user_can('edit_posts'); },
         ));
@@ -63,8 +64,22 @@ function mvpclub_player_meta_box($post) {
     echo '<table class="form-table">';
     foreach (mvpclub_player_fields() as $key => $label) {
         $value = get_post_meta($post->ID, $key, true);
-        echo '<tr><th><label for="' . esc_attr($key) . '">' . esc_html($label) . '</label></th>';
-        echo '<td><input type="text" name="' . esc_attr($key) . '" id="' . esc_attr($key) . '" value="' . esc_attr($value) . '" class="regular-text" /></td></tr>';
+        if ($key === 'radar_chart') {
+            $chart = json_decode($value, true);
+            $labels = isset($chart['labels']) ? (array) $chart['labels'] : array_fill(0, 6, '');
+            $values = isset($chart['values']) ? (array) $chart['values'] : array_fill(0, 6, 0);
+            echo '<tr><th colspan="2">' . esc_html($label) . '</th></tr>';
+            for ($i = 0; $i < 6; $i++) {
+                $l = isset($labels[$i]) ? $labels[$i] : '';
+                $v = isset($values[$i]) ? $values[$i] : 0;
+                echo '<tr><td><input type="text" name="radar_chart_label' . $i . '" value="' . esc_attr($l) . '" placeholder="Label" /></td>';
+                echo '<td><input type="range" name="radar_chart_value' . $i . '" min="0" max="100" value="' . esc_attr($v) . '" oninput="this.nextElementSibling.value=this.value" />';
+                echo '<output>' . esc_html($v) . '</output></td></tr>';
+            }
+        } else {
+            echo '<tr><th><label for="' . esc_attr($key) . '">' . esc_html($label) . '</label></th>';
+            echo '<td><input type="text" name="' . esc_attr($key) . '" id="' . esc_attr($key) . '" value="' . esc_attr($value) . '" class="regular-text" /></td></tr>';
+        }
     }
     echo '</table>';
 }
@@ -78,7 +93,16 @@ add_action('save_post_mvpclub_player', function($post_id) {
     if (!current_user_can('edit_post', $post_id)) return;
 
     foreach (mvpclub_player_fields() as $key => $label) {
-        if (isset($_POST[$key])) {
+        if ($key === 'radar_chart') {
+            $labels = array();
+            $values = array();
+            for ($i = 0; $i < 6; $i++) {
+                $labels[] = isset($_POST['radar_chart_label' . $i]) ? sanitize_text_field($_POST['radar_chart_label' . $i]) : '';
+                $values[] = isset($_POST['radar_chart_value' . $i]) ? intval($_POST['radar_chart_value' . $i]) : 0;
+            }
+            $chart = array('labels' => $labels, 'values' => $values);
+            update_post_meta($post_id, 'radar_chart', wp_json_encode($chart));
+        } elseif (isset($_POST[$key])) {
             update_post_meta($post_id, $key, sanitize_text_field($_POST[$key]));
         }
     }
@@ -175,6 +199,18 @@ function mvpclub_render_player_info($attributes) {
             echo '<li><strong>' . esc_html($label) . ':</strong> ' . esc_html($data[$key]) . '</li>';
         }
     }
-    echo '</ul></div>';
+    echo '</ul>';
+
+    if (!empty($data['radar_chart'])) {
+        $chart = json_decode($data['radar_chart'], true);
+        if (!empty($chart['labels']) && !empty($chart['values'])) {
+            $chart_id = 'radar-chart-' . $player_id;
+            echo '<canvas id="' . esc_attr($chart_id) . '" width="300" height="300"></canvas>';
+            wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js');
+            $inline  = 'document.addEventListener("DOMContentLoaded",function(){var c=document.getElementById("' . esc_js($chart_id) . '");if(c){new Chart(c,{type:"radar",data:{labels:' . wp_json_encode($chart['labels']) . ',datasets:[{label:"' . esc_js($title) . '",data:' . wp_json_encode($chart['values']) . ',backgroundColor:"rgba(54,162,235,0.2)",borderColor:"rgba(54,162,235,1)"}]},options:{scales:{r:{min:0,max:100,beginAtZero:true}}});}});';
+            wp_add_inline_script('chartjs', $inline);
+        }
+    }
+    echo '</div>';
     return ob_get_clean();
 }
