@@ -58,6 +58,34 @@ add_action('add_meta_boxes', function() {
     add_meta_box('mvpclub_player_details', 'Spielerdaten', 'mvpclub_player_meta_box', 'mvpclub_player');
 });
 
+/**
+ * Enqueue suggestion script for nationality field
+ */
+add_action('admin_enqueue_scripts', 'mvpclub_player_admin_scripts');
+function mvpclub_player_admin_scripts($hook) {
+    $screen = get_current_screen();
+    if ($screen->post_type !== 'mvpclub_player') return;
+
+    wp_enqueue_script(
+        'mvpclub-nationality-suggestions',
+        plugins_url('assets/nationality-suggestions.js', __FILE__),
+        array('jquery'),
+        filemtime(plugin_dir_path(__FILE__) . 'assets/nationality-suggestions.js'),
+        true
+    );
+
+    wp_localize_script('mvpclub-nationality-suggestions', 'mvpclubPlayers', array(
+        'countriesUrl' => plugins_url('assets/countries.json', __FILE__),
+    ));
+
+    wp_enqueue_style(
+        'mvpclub-nationality-suggestions',
+        plugins_url('assets/nationality-suggestions.css', __FILE__),
+        array(),
+        filemtime(plugin_dir_path(__FILE__) . 'assets/nationality-suggestions.css')
+    );
+}
+
 function mvpclub_player_meta_box($post) {
     wp_nonce_field('mvpclub_save_player', 'mvpclub_player_nonce');
     echo '<table class="form-table">';
