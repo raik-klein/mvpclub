@@ -1004,8 +1004,10 @@ function mvpclub_characteristics_section($wrap = false) {
                         <td>
                             <select name="attr_parent[<?php echo esc_attr($grp); ?>][<?php echo $id; ?>]">
                                 <option value="0">-</option>
-                                <?php foreach ($data[$grp] as $pid=>$prow) if($prow['parent']==0 && $pid!=$id): ?>
-                                    <option value="<?php echo $pid; ?>" <?php selected($row['parent'],$pid); ?>><?php echo esc_html($prow['name']); ?></option>
+                                <?php foreach ($data[$grp] as $pid => $prow): ?>
+                                    <?php if ($prow['parent'] == 0 && $pid != $id): ?>
+                                        <option value="<?php echo $pid; ?>" <?php selected($row['parent'], $pid); ?>><?php echo esc_html($prow['name']); ?></option>
+                                    <?php endif; ?>
                                 <?php endforeach; ?>
                             </select>
                         </td>
