@@ -97,19 +97,37 @@ function mvpclub_format_detail_position($value) {
 function mvpclub_generate_statistik_table($json) {
     $rows = json_decode($json, true);
     if (!is_array($rows) || empty($rows)) return '';
-    $html = '<table class="mvpclub-statistik"><thead><tr>'
-          . '<th>Saison</th><th>Wettbewerb</th><th>Spiele</th>'
-          . '<th>Tore</th><th>Assists</th><th>Minuten</th>'
+    $styles = get_option('mvpclub_statistik_styles', array(
+        'header_bg'   => '#333333',
+        'header_text' => '#ffffff',
+        'border'      => '#cccccc',
+        'odd_bg'      => '#f9f9f9'
+    ));
+
+    $table_style  = 'border-collapse:collapse;border:1px solid ' . esc_attr($styles['border']) . ';';
+    $th_style     = 'background:' . esc_attr($styles['header_bg']) . ';color:' . esc_attr($styles['header_text']) . ';border:1px solid ' . esc_attr($styles['border']) . ';';
+    $td_style     = 'border:1px solid ' . esc_attr($styles['border']) . ';';
+
+    $html = '<table class="mvpclub-statistik" style="' . $table_style . '"><thead><tr>'
+          . '<th style="' . $th_style . '">Saison</th>'
+          . '<th style="' . $th_style . '">Wettbewerb</th>'
+          . '<th style="' . $th_style . '">Spiele</th>'
+          . '<th style="' . $th_style . '">Tore</th>'
+          . '<th style="' . $th_style . '">Assists</th>'
+          . '<th style="' . $th_style . '">Minuten</th>'
           . '</tr></thead><tbody>';
+    $i = 0;
     foreach ($rows as $r) {
-        $html .= '<tr>'
-              . '<td>' . esc_html($r['Saison'] ?? '') . '</td>'
-              . '<td>' . esc_html($r['Wettbewerb'] ?? '') . '</td>'
-              . '<td>' . esc_html($r['Spiele'] ?? '') . '</td>'
-              . '<td>' . esc_html($r['Tore'] ?? '') . '</td>'
-              . '<td>' . esc_html($r['Assists'] ?? '') . '</td>'
-              . '<td>' . esc_html($r['Minuten'] ?? '') . '</td>'
+        $row_style = $i % 2 ? 'background:' . esc_attr($styles['odd_bg']) . ';' : '';
+        $html .= '<tr style="' . $row_style . '">'
+              . '<td style="' . $td_style . '">' . esc_html($r['Saison'] ?? '') . '</td>'
+              . '<td style="' . $td_style . '">' . esc_html($r['Wettbewerb'] ?? '') . '</td>'
+              . '<td style="' . $td_style . '">' . esc_html($r['Spiele'] ?? '') . '</td>'
+              . '<td style="' . $td_style . '">' . esc_html($r['Tore'] ?? '') . '</td>'
+              . '<td style="' . $td_style . '">' . esc_html($r['Assists'] ?? '') . '</td>'
+              . '<td style="' . $td_style . '">' . esc_html($r['Minuten'] ?? '') . '</td>'
               . '</tr>';
+        $i++;
     }
     $html .= '</tbody></table>';
     return $html;
@@ -536,6 +554,7 @@ add_action('save_post_mvpclub-spieler', function($post_id) {
 add_action('admin_menu', function() {
     add_submenu_page('mvpclub-main', 'Spielerdatenbank', 'Spielerdatenbank', 'edit_posts', 'edit.php?post_type=mvpclub-spieler');
     add_submenu_page('mvpclub-main', 'Scoutingberichte', 'Scoutingberichte', 'edit_posts', 'mvpclub-scout-settings', 'mvpclub_render_scout_settings_page');
+    add_submenu_page('mvpclub-main', 'Statistik', 'Statistik', 'edit_posts', 'mvpclub-statistik-settings', 'mvpclub_render_statistik_settings_page');
 });
 
 /**
@@ -638,8 +657,16 @@ function mvpclub_register_player_info_block() {
         filemtime(plugin_dir_path(__FILE__) . 'blocks/player-info.js')
     );
 
+    wp_register_style(
+        'mvpclub-editor-styles',
+        plugins_url('assets/editor.css', __FILE__),
+        array(),
+        filemtime(plugin_dir_path(__FILE__) . 'assets/editor.css')
+    );
+
     register_block_type('mvpclub/player-info', array(
         'editor_script'   => 'mvpclub-spieler-info-editor-script',
+        'editor_style'    => 'mvpclub-editor-styles',
         'render_callback' => 'mvpclub_render_player_info',
         'attributes'      => array(
             'playerId' => array(
@@ -657,7 +684,6 @@ function mvpclub_render_player_info($attributes) {
     $player_id = !empty($attributes['playerId']) ? absint($attributes['playerId']) : 0;
     if (!$player_id) return '';
 
-    $bg   = get_option('mvpclub_player_bg_color', '#f9f9f9');
     $text = get_option('mvpclub_player_text_color', '#000000');
     $code = get_option('mvpclub_scout_code', '<p>[spielername] - [verein]</p>');
 
@@ -666,7 +692,7 @@ function mvpclub_render_player_info($attributes) {
     $content = str_replace(array_keys($placeholders), array_values($placeholders), $code);
     $content = force_balance_tags( wp_kses_post( $content ) );
     ob_start();
-    echo '<div class="mvpclub-player-info" style="background:' . esc_attr($bg) . ';color:' . esc_attr($text) . ';padding:1em;">';
+    echo '<div class="mvpclub-player-info" style="color:' . esc_attr($text) . ';padding:1em;">';
     echo $content;
     echo '</div>';
     return ob_get_clean();
@@ -692,6 +718,100 @@ function mvpclub_ajax_preview_code() {
     $content      = str_replace(array_keys($placeholders), array_values($placeholders), $code);
     echo $content;
     wp_die();
+}
+
+/**
+ * Render settings page for the Statistik table styling
+ */
+function mvpclub_render_statistik_settings_page() {
+    if (isset($_POST['header_bg']) && check_admin_referer('mvpclub_statistik_settings','mvpclub_statistik_nonce')) {
+        $styles = array(
+            'header_bg'   => sanitize_hex_color($_POST['header_bg']),
+            'header_text' => sanitize_hex_color($_POST['header_text']),
+            'border'      => sanitize_hex_color($_POST['border']),
+            'odd_bg'      => sanitize_hex_color($_POST['odd_bg'])
+        );
+        update_option('mvpclub_statistik_styles', $styles);
+        echo '<div class="updated"><p>Einstellungen gespeichert.</p></div>';
+    }
+
+    $styles = get_option('mvpclub_statistik_styles', array(
+        'header_bg'   => '#333333',
+        'header_text' => '#ffffff',
+        'border'      => '#cccccc',
+        'odd_bg'      => '#f9f9f9'
+    ));
+
+    $player = get_posts(array(
+        'title'       => 'Ardon Jashari',
+        'post_type'   => 'mvpclub-spieler',
+        'numberposts' => 1
+    ));
+    $preview = '';
+    if ($player) {
+        $json    = get_post_meta($player[0]->ID, 'performance_data', true);
+        $preview = mvpclub_generate_statistik_table($json);
+    }
+    ?>
+    <div class="wrap">
+        <h1>Statistik</h1>
+        <form method="post">
+            <?php wp_nonce_field('mvpclub_statistik_settings','mvpclub_statistik_nonce'); ?>
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><label for="header_bg">Header-Hintergrund</label></th>
+                    <td><input type="color" name="header_bg" id="header_bg" value="<?php echo esc_attr($styles['header_bg']); ?>" /></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="header_text">Header-Textfarbe</label></th>
+                    <td><input type="color" name="header_text" id="header_text" value="<?php echo esc_attr($styles['header_text']); ?>" /></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="border">Rahmenfarbe</label></th>
+                    <td><input type="color" name="border" id="border" value="<?php echo esc_attr($styles['border']); ?>" /></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="odd_bg">Zeilenfarbe (ungerade)</label></th>
+                    <td><input type="color" name="odd_bg" id="odd_bg" value="<?php echo esc_attr($styles['odd_bg']); ?>" /></td>
+                </tr>
+            </table>
+            <?php submit_button('Speichern'); ?>
+        </form>
+
+        <h2>Live-Vorschau</h2>
+        <div id="mvpclub-statistik-preview">
+            <?php echo $preview; ?>
+        </div>
+    </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function(){
+        function update(){
+            var table = document.querySelector('#mvpclub-statistik-preview table');
+            if(!table) return;
+            var hb = document.getElementById('header_bg').value;
+            var ht = document.getElementById('header_text').value;
+            var b  = document.getElementById('border').value;
+            var ob = document.getElementById('odd_bg').value;
+            table.style.border = '1px solid '+b;
+            table.querySelectorAll('th').forEach(function(th){
+                th.style.background = hb;
+                th.style.color = ht;
+                th.style.border = '1px solid '+b;
+            });
+            table.querySelectorAll('td').forEach(function(td){
+                td.style.border = '1px solid '+b;
+            });
+            table.querySelectorAll('tbody tr:nth-child(odd)').forEach(function(tr){
+                tr.style.background = ob;
+            });
+        }
+        document.querySelectorAll('#header_bg,#header_text,#border,#odd_bg').forEach(function(el){
+            el.addEventListener('input', update);
+        });
+        update();
+    });
+    </script>
+    <?php
 }
 
 /**
