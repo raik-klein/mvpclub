@@ -601,7 +601,6 @@ function mvpclub_render_player_info($attributes) {
     $placeholders = mvpclub_player_placeholders($player_id);
 
     $content = str_replace(array_keys($placeholders), array_values($placeholders), $code);
-
     ob_start();
     echo '<div class="mvpclub-player-info" style="background:' . esc_attr($bg) . ';color:' . esc_attr($text) . ';padding:1em;">';
     echo $content;
