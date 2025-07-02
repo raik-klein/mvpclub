@@ -4,8 +4,9 @@ Das **mvpclub.de Plugin** erweitert WordPress um maßgeschneiderte Funktionen f�
 
 ## Funktionen
 
-- ✅ Shortcodes für dynamische Spielerinfos (z. B. Alter, Position, Statistik)
+- ✅ Shortcodes für dynamische Spielerinfos (z. B. Alter, Position, Statistik, Rolle)
 - Neu: Platzhalter `[bild-url]` liefert die Bild-URL eines Spielers
+- Neu: Shortcodes `[staerken]` und `[schwaechen]` geben ProCon-Listen aus
 - 📊 Custom Editor.Blöcke für Scoutingberichte und Spielerstatistiken
 - 🔍 Verbesserte SEO-Auszeichnung mit strukturierten Daten
 - 🧠 Optimiert für datengetriebene Fußballinhalte

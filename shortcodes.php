@@ -76,6 +76,44 @@ add_shortcode('spielstil', function($atts = []) {
     return $val !== '' ? esc_html($val) : '';
 });
 
+add_shortcode('rolle', function($atts = []) {
+    $atts = shortcode_atts(['id' => null], $atts);
+    $post_id = $atts['id'] ? intval($atts['id']) : get_the_ID();
+    if (!$post_id) return '';
+    $val = get_post_meta($post_id, 'rolle', true);
+    return $val !== '' ? esc_html($val) : '';
+});
+
+add_shortcode('staerken', function($atts = []) {
+    $atts = shortcode_atts(['id' => null], $atts);
+    $post_id = $atts['id'] ? intval($atts['id']) : get_the_ID();
+    if (!$post_id) return '';
+    $json = get_post_meta($post_id, 'strengths', true);
+    $items = json_decode($json, true);
+    if (!is_array($items) || empty($items)) return '';
+    $out = '<ul class="procon">';
+    foreach ($items as $it) {
+        $out .= '<li>' . esc_html($it) . '</li>';
+    }
+    $out .= '</ul>';
+    return $out;
+});
+
+add_shortcode('schwaechen', function($atts = []) {
+    $atts = shortcode_atts(['id' => null], $atts);
+    $post_id = $atts['id'] ? intval($atts['id']) : get_the_ID();
+    if (!$post_id) return '';
+    $json = get_post_meta($post_id, 'weaknesses', true);
+    $items = json_decode($json, true);
+    if (!is_array($items) || empty($items)) return '';
+    $out = '<ul class="procon">';
+    foreach ($items as $it) {
+        $out .= '<li>' . esc_html($it) . '</li>';
+    }
+    $out .= '</ul>';
+    return $out;
+});
+
 add_shortcode('radar', function($atts = []) {
     $atts = shortcode_atts(['id' => null], $atts);
     $post_id = $atts['id'] ? intval($atts['id']) : get_the_ID();

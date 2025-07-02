@@ -85,6 +85,7 @@ function mvpclub_player_fields() {
         'market_value'     => 'Marktwert',
         'rating'           => 'Bewertung',
         'spielstil'        => 'Spielstil',
+        'rolle'            => 'Rolle',
         'strengths'        => 'Stärken',
         'weaknesses'       => 'Schwächen',
         'performance_data' => 'Statistik',
@@ -270,6 +271,7 @@ function mvpclub_player_placeholders($player_id) {
         '[marktwert]'       => isset($data['market_value']) ? $data['market_value'] : '',
         '[bewertung]'       => isset($data['rating']) ? $data['rating'] : '',
         '[spielstil]'       => isset($data['spielstil']) ? $data['spielstil'] : '',
+        '[rolle]'           => isset($data['rolle']) ? $data['rolle'] : '',
         '[bild]'            => $img,
         '[bild-url]'        => $img_url,
         '[statistik]'       => $statistik_html,
@@ -520,6 +522,17 @@ function mvpclub_player_meta_box($post) {
 1.0 (D): RDW-Kaderspieler</pre></td></tr>';
     $spielstil = isset($values['spielstil']) ? $values['spielstil'] : '';
     echo '<tr><th><label for="spielstil">' . esc_html($fields['spielstil']) . '</label></th><td><textarea name="spielstil" id="spielstil" rows="4" class="large-text">' . esc_textarea($spielstil) . '</textarea></td></tr>';
+
+    $rolle = isset($values['rolle']) ? $values['rolle'] : '';
+    $role_opts = get_option('mvpclub_scout_roles', array());
+    echo '<tr><th><label for="rolle">' . esc_html($fields['rolle']) . '</label></th><td><select name="rolle" id="rolle"><option value=""></option>';
+    if (is_array($role_opts)) {
+        foreach ($role_opts as $r) {
+            $sel = $rolle === $r ? ' selected' : '';
+            echo '<option value="' . esc_attr($r) . '"' . $sel . '>' . esc_html($r) . '</option>';
+        }
+    }
+    echo '</select></td></tr>';
 
     $type = (isset($values['position']) && $values['position'] === 'Tor') ? 'Tor' : 'Feldspieler';
     $strengths = json_decode($values['strengths'], true);
@@ -782,14 +795,18 @@ function mvpclub_render_scout_settings_page() {
 
 function mvpclub_render_characteristics_page() {
     if (isset($_POST['tor_chars']) && check_admin_referer('mvpclub_characteristics','mvpclub_char_nonce')) {
-        $tor  = mvpclub_parse_characteristics(wp_unslash($_POST['tor_chars']));
-        $feld = mvpclub_parse_characteristics(wp_unslash($_POST['feld_chars']));
+        $tor   = mvpclub_parse_characteristics(wp_unslash($_POST['tor_chars']));
+        $feld  = mvpclub_parse_characteristics(wp_unslash($_POST['feld_chars']));
+        $roles = array_filter(array_map('trim', explode("\n", wp_unslash($_POST['roles'] ?? ''))));
         update_option('mvpclub_scout_characteristics', array('Tor' => $tor, 'Feldspieler' => $feld));
+        update_option('mvpclub_scout_roles', $roles);
         echo '<div class="updated"><p>Einstellungen gespeichert.</p></div>';
     }
-    $data = mvpclub_get_characteristics();
+    $data      = mvpclub_get_characteristics();
     $tor_text  = mvpclub_characteristics_to_text($data['Tor']);
     $feld_text = mvpclub_characteristics_to_text($data['Feldspieler']);
+    $roles     = get_option('mvpclub_scout_roles', array());
+    $roles_text = implode("\n", is_array($roles) ? $roles : array());
     ?>
     <div class="wrap">
         <h1>Scouting</h1>
@@ -803,6 +820,10 @@ function mvpclub_render_characteristics_page() {
                 <tr>
                     <th scope="row"><label for="feld_chars">Feldspieler</label></th>
                     <td><textarea name="feld_chars" id="feld_chars" rows="10" class="large-text code"><?php echo esc_textarea($feld_text); ?></textarea></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="roles">Rollen</label></th>
+                    <td><textarea name="roles" id="roles" rows="5" class="large-text code"><?php echo esc_textarea($roles_text); ?></textarea><p class="description">Eine Rolle pro Zeile</p></td>
                 </tr>
             </table>
             <?php submit_button('Speichern'); ?>
@@ -1145,3 +1166,13 @@ function mvpclub_player_quick_edit_box($column_name, $post_type) {
     </fieldset>
     <?php
 }
+
+add_action('wp_enqueue_scripts', function(){
+    wp_enqueue_style(
+        'mvpclub-procon',
+        plugins_url('assets/procon.css', __FILE__),
+        array(),
+        filemtime(plugin_dir_path(__FILE__) . 'assets/procon.css')
+    );
+});
+
