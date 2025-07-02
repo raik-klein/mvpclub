@@ -96,31 +96,63 @@ add_action('admin_menu', function() {
  * Render the "Scoutingberichte" settings page
  */
 function mvpclub_render_scout_settings_page() {
-    if (isset($_POST['mvpclub_player_bg_color']) && check_admin_referer('mvpclub_scout_settings', 'mvpclub_scout_nonce')) {
-        update_option('mvpclub_player_bg_color', sanitize_hex_color($_POST['mvpclub_player_bg_color']));
-        update_option('mvpclub_player_text_color', sanitize_hex_color($_POST['mvpclub_player_text_color']));
+    if (isset($_POST['mvpclub_scout_template']) && check_admin_referer('mvpclub_scout_settings', 'mvpclub_scout_nonce')) {
+        update_option('mvpclub_scout_template', wp_kses_post($_POST['mvpclub_scout_template']));
         echo '<div class="updated"><p>Einstellungen gespeichert.</p></div>';
     }
-    $bg   = get_option('mvpclub_player_bg_color', '#f9f9f9');
-    $text = get_option('mvpclub_player_text_color', '#000000');
+
+    $template = get_option('mvpclub_scout_template', '<p>[spieler-name] - [verein]</p>');
+
+    $placeholders = array(
+        '[spieler-name]'  => 'Max Mustermann',
+        '[geburtsdatum]'  => '01.01.2000',
+        '[geburtsort]'    => 'Beispielstadt',
+        '[groesse]'       => '180 cm',
+        '[nationalitaet]' => 'Deutsch',
+        '[position]'      => 'Stürmer',
+        '[fuss]'          => 'rechts',
+        '[berater]'       => 'Musterberater',
+        '[verein]'        => 'FC Beispiel',
+    );
+
+    $preview = str_replace(array_keys($placeholders), array_values($placeholders), $template);
     ?>
     <div class="wrap">
         <h1>Scoutingberichte</h1>
         <form method="post">
             <?php wp_nonce_field('mvpclub_scout_settings', 'mvpclub_scout_nonce'); ?>
-            <table class="form-table">
-                <tr>
-                    <th scope="row"><label for="mvpclub_player_bg_color">Hintergrundfarbe</label></th>
-                    <td><input name="mvpclub_player_bg_color" type="text" id="mvpclub_player_bg_color" value="<?php echo esc_attr($bg); ?>" class="regular-text" /></td>
-                </tr>
-                <tr>
-                    <th scope="row"><label for="mvpclub_player_text_color">Textfarbe</label></th>
-                    <td><input name="mvpclub_player_text_color" type="text" id="mvpclub_player_text_color" value="<?php echo esc_attr($text); ?>" class="regular-text" /></td>
-                </tr>
-            </table>
+            <?php
+            wp_editor($template, 'mvpclub_scout_template_editor', array(
+                'textarea_name' => 'mvpclub_scout_template',
+                'textarea_rows' => 10,
+            ));
+            ?>
+            <p><?php esc_html_e('Platzhalter einfügen:', 'mvpclub'); ?>
+                <?php foreach ($placeholders as $tag => $sample) : ?>
+                    <button type="button" class="insert-placeholder button" data-placeholder="<?php echo esc_attr($tag); ?>"><?php echo esc_html($tag); ?></button>
+                <?php endforeach; ?>
+            </p>
             <?php submit_button('Speichern'); ?>
         </form>
+
+        <h2>Vorschau</h2>
+        <div class="mvpclub-scout-preview" style="border:1px solid #ccc;padding:1em;">
+            <?php echo wpautop($preview); ?>
+        </div>
     </div>
+    <script>
+    jQuery(function($){
+        $('.insert-placeholder').on('click', function(){
+            var tag = $(this).data('placeholder');
+            if (typeof tinymce !== 'undefined' && tinymce.activeEditor) {
+                tinymce.activeEditor.execCommand('mceInsertContent', false, tag);
+            } else {
+                var textarea = $('#mvpclub_scout_template_editor');
+                textarea.val(textarea.val() + tag);
+            }
+        });
+    });
+    </script>
     <?php
 }
 
