@@ -287,6 +287,7 @@ function mvpclub_generate_statistik_table($json) {
         'header_text' => '#000000',
         'border'      => '#eeeeee',
         'odd_bg'      => '#ffffff',
+        'css'         => '',
         'headers'     => array(
             'saison'     => 'Saison',
             'wettbewerb' => 'Wettbewerb',
@@ -302,7 +303,7 @@ function mvpclub_generate_statistik_table($json) {
     $styles['headers'] = isset($styles['headers']) && is_array($styles['headers'])
         ? wp_parse_args($styles['headers'], $defaults['headers']) : $defaults['headers'];
 
-    $table_style  = 'border-collapse:collapse;width:100%;';
+    $table_style  = 'border-collapse:collapse;width:100%;' . esc_attr($styles['css']);
     $th_style     = 'background:' . esc_attr($styles['header_bg']) . ';color:' . esc_attr($styles['header_text']) . ';text-align:center;padding:12px 16px;border-bottom:1px solid ' . esc_attr($styles['border']) . ';font-weight:600;';
     $td_style     = 'text-align:center;padding:12px 16px;border-bottom:1px solid ' . esc_attr($styles['border']) . ';';
 
@@ -314,10 +315,10 @@ function mvpclub_generate_statistik_table($json) {
     .mvpclub-statistik th:nth-child(2){text-align:left;}
     @media screen and (max-width:600px){
         .mvpclub-statistik thead{display:none;}
-        .mvpclub-statistik, .mvpclub-statistik tbody, .mvpclub-statistik tr, .mvpclub-statistik td{display:block;width:100%;}
+        .mvpclub-statistik, .mvpclub-statistik tbody, .mvpclub-statistik tr{display:block;width:100%;}
         .mvpclub-statistik tr{margin-bottom:1rem;}
-        .mvpclub-statistik td{border:none;border-bottom:1px solid ' . esc_attr($styles['border']) . ';position:relative;padding-left:50%;text-align:left;}
-        .mvpclub-statistik td:before{content:attr(data-label);position:absolute;left:0;width:45%;padding-left:15px;font-weight:bold;}
+        .mvpclub-statistik td{display:flex;justify-content:space-between;align-items:flex-start;border:none;border-bottom:1px solid ' . esc_attr($styles['border']) . ';padding:8px 12px;box-sizing:border-box;word-break:break-word;}
+        .mvpclub-statistik td:before{content:attr(data-label);font-weight:bold;padding-right:10px;}
     }
     </style>';
 
@@ -1143,6 +1144,7 @@ function mvpclub_render_statistik_settings_page() {
             'header_text' => sanitize_hex_color($_POST['header_text']),
             'border'      => sanitize_hex_color($_POST['border']),
             'odd_bg'      => sanitize_hex_color($_POST['odd_bg']),
+            'css'         => wp_unslash($_POST['table_css']),
             'headers'     => array(
                 'saison'     => sanitize_text_field($_POST['header_saison']),
                 'wettbewerb' => sanitize_text_field($_POST['header_wettbewerb']),
@@ -1161,6 +1163,7 @@ function mvpclub_render_statistik_settings_page() {
         'header_text' => '#000000',
         'border'      => '#eeeeee',
         'odd_bg'      => '#ffffff',
+        'css'         => '',
         'headers'     => array(
             'saison'     => 'Saison',
             'wettbewerb' => 'Wettbewerb',
@@ -1191,6 +1194,10 @@ function mvpclub_render_statistik_settings_page() {
         <form method="post">
             <?php wp_nonce_field('mvpclub_statistik_settings','mvpclub_statistik_nonce'); ?>
             <table class="form-table">
+                <tr>
+                    <th scope="row"><label for="table_css">CSS</label></th>
+                    <td><input type="text" name="table_css" id="table_css" value="<?php echo esc_attr($styles['css']); ?>" class="regular-text" /></td>
+                </tr>
                 <tr>
                     <th scope="row"><label for="header_bg">Header-Hintergrund</label></th>
                     <td><input type="color" name="header_bg" id="header_bg" value="<?php echo esc_attr($styles['header_bg']); ?>" /></td>
@@ -1249,13 +1256,14 @@ function mvpclub_render_statistik_settings_page() {
             var ht = document.getElementById('header_text').value;
             var b  = document.getElementById('border').value;
             var ob = document.getElementById('odd_bg').value;
+            var css = document.getElementById('table_css').value;
             var hs = document.getElementById('header_saison').value;
             var hw = document.getElementById('header_wettbewerb').value;
             var hsp = document.getElementById('header_spiele').value;
             var hto = document.getElementById('header_tore').value;
             var has = document.getElementById('header_assists').value;
             var hmi = document.getElementById('header_minuten').value;
-            table.style.border = '1px solid '+b;
+            table.style.cssText = 'border-collapse:collapse;width:100%;border:1px solid '+b+';'+css;
             var heads = [hs, hw, hsp, hto, has, hmi];
             table.querySelectorAll('thead th').forEach(function(th, i){
                 th.style.background = hb;
@@ -1281,7 +1289,7 @@ function mvpclub_render_statistik_settings_page() {
                 }
             });
         }
-        document.querySelectorAll('#header_bg,#header_text,#border,#odd_bg,#header_saison,#header_wettbewerb,#header_spiele,#header_tore,#header_assists,#header_minuten').forEach(function(el){
+        document.querySelectorAll('#table_css,#header_bg,#header_text,#border,#odd_bg,#header_saison,#header_wettbewerb,#header_spiele,#header_tore,#header_assists,#header_minuten').forEach(function(el){
             el.addEventListener('input', update);
         });
         update();
