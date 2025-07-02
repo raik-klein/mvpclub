@@ -15,3 +15,4 @@ require_once plugin_dir_path(__FILE__) . 'fixes.php';
 require_once plugin_dir_path(__FILE__) . 'blocks/scouting-posts.php';
 require_once plugin_dir_path(__FILE__) . 'blocks/ads.php';
 require_once plugin_dir_path(__FILE__) . 'players.php';
+require_once plugin_dir_path(__FILE__) . 'competitions.php';
