@@ -26,16 +26,20 @@ add_shortcode('lesedauer', function () {
     return esc_html($minuten . ' Minute' . ($minuten > 1 ? 'n' : '') . ' Lesedauer');
 });
 
-add_shortcode('ad', function() {
+add_shortcode('ad', function($atts = array()) {
+    $atts = shortcode_atts(array(
+        'client' => 'ca-pub-3126572075544456',
+        'slot'   => '8708811170',
+    ), $atts, 'ad');
     ob_start();
     ?>
     <div class="mvpclub-ad">
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3126572075544456"
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=<?php echo esc_attr($atts['client']); ?>"
             crossorigin="anonymous"></script>
         <ins class="adsbygoogle"
             style="display:block"
-            data-ad-client="ca-pub-3126572075544456"
-            data-ad-slot="8708811170"
+            data-ad-client="<?php echo esc_attr($atts['client']); ?>"
+            data-ad-slot="<?php echo esc_attr($atts['slot']); ?>"
             data-ad-format="auto"
             data-full-width-responsive="true"></ins>
         <script>

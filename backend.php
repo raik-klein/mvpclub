@@ -107,8 +107,8 @@ function mvpclub_render_ads_settings_page() {
     }
 
     // Aktuelle Werte laden
-    $client = get_option('mvpclub_ads_client', '');
-    $slot   = get_option('mvpclub_ads_slot', '');
+    $client = get_option('mvpclub_ads_client', 'ca-pub-3126572075544456');
+    $slot   = get_option('mvpclub_ads_slot', '8708811170');
 
     ?>
     <div class="wrap">
@@ -135,7 +135,7 @@ function mvpclub_render_ads_settings_page() {
  * Passt das Shortcode-Rendering an, um Client- und Slot-ID zu nutzen.
  */
 add_filter('shortcode_atts_ad', function($out) {
-    $out['client'] = get_option('mvpclub_ads_client', 'ca-pub-XXXX');
-    $out['slot']   = get_option('mvpclub_ads_slot',   'YYYY');
+    $out['client'] = get_option('mvpclub_ads_client', 'ca-pub-3126572075544456');
+    $out['slot']   = get_option('mvpclub_ads_slot',   '8708811170');
     return $out;
 }, 10, 1);
