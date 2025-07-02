@@ -56,3 +56,11 @@ add_shortcode('bewertung', function($atts = []) {
     return $rating !== '' ? esc_html($rating) : '';
 });
 
+add_shortcode('statistik', function($atts = []) {
+    $atts = shortcode_atts(['id' => null], $atts);
+    $post_id = $atts['id'] ? intval($atts['id']) : get_the_ID();
+    if (!$post_id) return '';
+    $json = get_post_meta($post_id, 'performance_data', true);
+    return mvpclub_generate_statistik_table($json);
+});
+

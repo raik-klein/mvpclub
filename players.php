@@ -74,7 +74,7 @@ function mvpclub_player_fields() {
         'club'             => 'Verein',
         'market_value'     => 'Marktwert',
         'rating'           => 'Bewertung',
-        'performance_data' => 'Leistungsdaten',
+        'performance_data' => 'Statistik',
         'image'            => 'Bild',
         'radar_chart'      => 'Radar Chart',
     );
@@ -88,6 +88,30 @@ function mvpclub_format_detail_position($value) {
     if (empty($parts)) return '';
     $main = array_shift($parts);
     return $parts ? $main . ' (' . implode(' / ', $parts) . ')' : $main;
+}
+
+/**
+ * Create HTML table from performance data JSON
+ */
+function mvpclub_generate_statistik_table($json) {
+    $rows = json_decode($json, true);
+    if (!is_array($rows) || empty($rows)) return '';
+    $html = '<table class="mvpclub-statistik"><thead><tr>'
+          . '<th>Saison</th><th>Wettbewerb</th><th>Spiele</th>'
+          . '<th>Tore</th><th>Assists</th><th>Minuten</th>'
+          . '</tr></thead><tbody>';
+    foreach ($rows as $r) {
+        $html .= '<tr>'
+              . '<td>' . esc_html($r['Saison'] ?? '') . '</td>'
+              . '<td>' . esc_html($r['Wettbewerb'] ?? '') . '</td>'
+              . '<td>' . esc_html($r['Spiele'] ?? '') . '</td>'
+              . '<td>' . esc_html($r['Tore'] ?? '') . '</td>'
+              . '<td>' . esc_html($r['Assists'] ?? '') . '</td>'
+              . '<td>' . esc_html($r['Minuten'] ?? '') . '</td>'
+              . '</tr>';
+    }
+    $html .= '</tbody></table>';
+    return $html;
 }
 
 /**
@@ -197,7 +221,7 @@ function mvpclub_player_meta_box($post) {
     echo '<h2 class="nav-tab-wrapper">';
     echo '<a href="#" class="nav-tab nav-tab-active" data-tab="info">Information</a>';
     echo '<a href="#" class="nav-tab" data-tab="rating">Bewertung</a>';
-    echo '<a href="#" class="nav-tab" data-tab="performance">Leistungsdaten</a>';
+    echo '<a href="#" class="nav-tab" data-tab="statistik">Statistik</a>';
     echo '<a href="#" class="nav-tab" data-tab="radar">Radar</a>';
     echo '</h2>';
 
@@ -281,7 +305,7 @@ function mvpclub_player_meta_box($post) {
     echo '</table></div>';
 
     // Performance Tab
-    echo '<div id="tab-performance" class="mvpclub-tab-content"><table id="performance-data-table" class="widefat"><thead><tr><th>Saison</th><th>Wettbewerb</th><th>Spiele</th><th>Tore</th><th>Assists</th><th>Minuten</th><th></th></tr></thead><tbody>';
+    echo '<div id="tab-statistik" class="mvpclub-tab-content"><table id="statistik-data-table" class="widefat"><thead><tr><th>Saison</th><th>Wettbewerb</th><th>Spiele</th><th>Tore</th><th>Assists</th><th>Minuten</th><th></th></tr></thead><tbody>';
     $perf = json_decode($values['performance_data'], true);
     if (!is_array($perf)) { $perf = array(); }
     foreach ($perf as $row) {
@@ -292,11 +316,11 @@ function mvpclub_player_meta_box($post) {
         echo '<td><input type="number" name="perf_goals[]" value="' . esc_attr($row['Tore'] ?? '') . '" /></td>';
         echo '<td><input type="number" name="perf_assists[]" value="' . esc_attr($row['Assists'] ?? '') . '" /></td>';
         echo '<td><input type="number" name="perf_minutes[]" value="' . esc_attr($row['Minuten'] ?? '') . '" /></td>';
-        echo '<td><button class="button remove-performance-row">X</button></td>';
+        echo '<td><button class="button remove-statistik-row">X</button></td>';
         echo '</tr>';
     }
     echo '</tbody></table>';
-    echo '<p><button type="button" class="button" id="add-performance-row">Zeile hinzufügen</button></p></div>';
+    echo '<p><button type="button" class="button" id="add-statistik-row">Zeile hinzufügen</button></p></div>';
 
     // Radar Tab
     echo '<div id="tab-radar" class="mvpclub-tab-content"><table class="form-table">';
@@ -398,21 +422,24 @@ function mvpclub_render_scout_settings_page() {
         echo '<div class="updated"><p>Einstellungen gespeichert.</p></div>';
     }
 
-    $template = get_option('mvpclub_scout_template', '<p>[spieler-name] - [verein]</p>');
+    $template = get_option('mvpclub_scout_template', '<p>[spielername] - [verein]</p>');
     $css      = get_option('mvpclub_scout_css', '');
 
     $placeholders = array(
-        '[spieler-name]'  => 'Max Mustermann',
-        '[geburtsdatum]'  => '01.01.2000',
-        '[geburtsort]'    => 'Beispielstadt',
-        '[groesse]'       => '180 cm',
-        '[nationalitaet]' => 'Deutsch',
-        '[position]'      => 'Stürmer',
-        '[fuss]'          => 'rechts',
-        '[verein]'        => 'FC Beispiel',
-        '[detail_position]' => 'OM (ZM / DM)',
-        '[bewertung]'     => '4.0',
-        '[radar_chart]'   => 'Radar-Beispiel',
+        '[spielername]'     => 'Max Mustermann',
+        '[geburtsdatum]'    => '01.01.2000',
+        '[geburtsort]'      => 'Beispielstadt',
+        '[groesse]'         => '180 cm',
+        '[nationalitaet]'   => 'Deutsch',
+        '[position]'        => 'Stürmer',
+        '[detailposition]'  => 'OM (ZM / DM)',
+        '[fuss]'            => 'rechts',
+        '[verein]'          => 'FC Beispiel',
+        '[marktwert]'       => '1 Mio €',
+        '[bewertung]'       => '4.0',
+        '[bild]'            => 'Bild',
+        '[statistik]'       => '<table><tr><td>Statistik</td></tr></table>',
+        '[radar]'           => 'Radar-Beispiel',
     );
 
     $preview_html = str_replace(array_keys($placeholders), array_values($placeholders), $template);
@@ -498,7 +525,7 @@ function mvpclub_render_player_info($attributes) {
     $bg    = get_option('mvpclub_player_bg_color', '#f9f9f9');
     $text  = get_option('mvpclub_player_text_color', '#000000');
 
-    $template = get_option('mvpclub_scout_template', '<p>[spieler-name] - [verein]</p>');
+    $template = get_option('mvpclub_scout_template', '<p>[spielername] - [verein]</p>');
 
     $chart_html = '';
     if (!empty($data['radar_chart'])) {
@@ -518,24 +545,26 @@ function mvpclub_render_player_info($attributes) {
         }
     }
 
+    $statistik_html = mvpclub_generate_statistik_table($data['performance_data']);
     $placeholders = array(
-        '[spieler-name]'  => $title,
-        '[geburtsdatum]'  => isset($data['birthdate']) ? $data['birthdate'] : '',
-        '[geburtsort]'    => isset($data['birthplace']) ? $data['birthplace'] : '',
-        '[groesse]'       => isset($data['height']) ? $data['height'] : '',
-        '[nationalitaet]' => isset($data['nationality']) ? $data['nationality'] : '',
-        '[position]'      => isset($data['position']) ? $data['position'] : '',
-        '[fuss]'          => isset($data['foot']) ? $data['foot'] : '',
-        '[verein]'        => isset($data['club']) ? $data['club'] : '',
-        '[detail_position]' => mvpclub_format_detail_position(isset($data['detail_position']) ? $data['detail_position'] : ''),
-        '[bewertung]'     => isset($data['rating']) ? $data['rating'] : '',
-        '[radar_chart]'   => 'Radar-Beispiel',
-        '[bild]'          => $img,
-        '[radar_chart]'   => $chart_html,
+        '[spielername]'     => $title,
+        '[geburtsdatum]'    => isset($data['birthdate']) ? $data['birthdate'] : '',
+        '[geburtsort]'      => isset($data['birthplace']) ? $data['birthplace'] : '',
+        '[groesse]'         => isset($data['height']) ? $data['height'] : '',
+        '[nationalitaet]'   => isset($data['nationality']) ? $data['nationality'] : '',
+        '[position]'        => isset($data['position']) ? $data['position'] : '',
+        '[detailposition]'  => mvpclub_format_detail_position(isset($data['detail_position']) ? $data['detail_position'] : ''),
+        '[fuss]'            => isset($data['foot']) ? $data['foot'] : '',
+        '[verein]'          => isset($data['club']) ? $data['club'] : '',
+        '[marktwert]'       => isset($data['market_value']) ? $data['market_value'] : '',
+        '[bewertung]'       => isset($data['rating']) ? $data['rating'] : '',
+        '[bild]'            => $img,
+        '[statistik]'       => $statistik_html,
+        '[radar]'           => $chart_html,
     );
 
     foreach ($placeholders as $tag => $val) {
-        if ($tag !== '[bild]' && $tag !== '[radar_chart]') {
+        if ($tag !== '[bild]' && $tag !== '[radar]' && $tag !== '[statistik]') {
             $placeholders[$tag] = esc_html($val);
         }
     }
