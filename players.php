@@ -1209,12 +1209,5 @@ function mvpclub_player_quick_edit_box($column_name, $post_type) {
     <?php
 }
 
-add_action('wp_enqueue_scripts', function(){
-    wp_enqueue_style(
-        'mvpclub-procon',
-        plugins_url('assets/procon.css', __FILE__),
-        array(),
-        filemtime(plugin_dir_path(__FILE__) . 'assets/procon.css')
-    );
-});
+
 
