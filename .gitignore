@@ -1,0 +1,15 @@
+# Ignore macOS finder files
+.DS_Store
+
+# Node modules
+node_modules/
+
+# Build output directories
+build/
+dist/
+
+# PHP dependencies
+vendor/
+
+# Log files
+*.log

@@ -6,35 +6,29 @@ add_action('admin_menu', function () {
     add_menu_page(
         'MVP Zentrale',
         'MVP',
-        'edit_posts', // <-- Hier geändert
+        'edit_posts',
         'mvpclub-main',
-        'mvpclub_render_zentrale_page',
+        'mvpclub_redirect_to_players',
         'dashicons-star-filled',
         3
     );
 
+    // Kombinierter Menüpunkt für Blöcke und Shortcodes
     add_submenu_page(
         'mvpclub-main',
-        'Scouting-Block',
-        'Scouting-Block',
-        'edit_posts', // <-- Hier geändert
-        'mvpclub-block-scouting',
-        'mvpclub_render_block_page'
-    );
-
-    add_submenu_page(
-        'mvpclub-main',
-        'Shortcodes',
-        'Shortcodes',
-        'edit_posts', // <-- Hier geändert
-        'mvpclub-shortcodes',
-        'mvpclub_render_shortcodes_page'
+        'Elemente',
+        'Elemente',
+        'edit_posts',
+        'mvpclub-elements',
+        'mvpclub_render_elements_page'
     );
 });
 
 // Seiteninhalte
-function mvpclub_render_zentrale_page() {
-    echo '<div class="wrap"><h1>MVP Zentrale</h1><p>Willkommen im mvpclub-Plugin-Bereich.</p></div>';
+// Redirects the top-level "MVP" menu to the player database
+function mvpclub_redirect_to_players() {
+    wp_safe_redirect(admin_url('edit.php?post_type=mvpclub-spieler'));
+    exit;
 }
 
 function mvpclub_render_block_page() {
@@ -74,6 +68,12 @@ function mvpclub_render_shortcodes_page() {
     </div>';
 }
 
+// Neue kombinierte Seite für Blöcke und Shortcodes
+function mvpclub_render_elements_page() {
+    mvpclub_render_block_page();
+    mvpclub_render_shortcodes_page();
+}
+
 /**
  * Fügt im Admin-Menü unter „mvpclub“ einen Unterpunkt „Werbung“ hinzu.
  */
@@ -105,8 +105,8 @@ function mvpclub_render_ads_settings_page() {
     }
 
     // Aktuelle Werte laden
-    $client = get_option('mvpclub_ads_client', '');
-    $slot   = get_option('mvpclub_ads_slot', '');
+    $client = get_option('mvpclub_ads_client', 'ca-pub-3126572075544456');
+    $slot   = get_option('mvpclub_ads_slot', '8708811170');
 
     ?>
     <div class="wrap">
@@ -133,7 +133,7 @@ function mvpclub_render_ads_settings_page() {
  * Passt das Shortcode-Rendering an, um Client- und Slot-ID zu nutzen.
  */
 add_filter('shortcode_atts_ad', function($out) {
-    $out['client'] = get_option('mvpclub_ads_client', 'ca-pub-XXXX');
-    $out['slot']   = get_option('mvpclub_ads_slot',   'YYYY');
+    $out['client'] = get_option('mvpclub_ads_client', 'ca-pub-3126572075544456');
+    $out['slot']   = get_option('mvpclub_ads_slot',   '8708811170');
     return $out;
 }, 10, 1);

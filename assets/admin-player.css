@@ -1,0 +1,22 @@
+#mvpclub-player-tabs .mvpclub-tab-content{display:none;}
+#mvpclub-player-tabs .mvpclub-tab-content.active{display:block;}
+.mvpclub-main-position{font-weight:bold;background:#f0f8ff;}
+#tab-statistik{overflow-x:auto;}
+#tab-statistik table{width:100%;table-layout:fixed;}
+#tab-statistik input,#tab-statistik select{width:100%;box-sizing:border-box;}
+#tab-radar .mvpclub-radar-flex{display:flex;flex-direction:column;align-items:flex-start;gap:20px;}
+#tab-radar .mvpclub-radar-settings{width:250px;}
+#tab-radar .mvpclub-radar-settings tr{display:flex;align-items:center;gap:8px;}
+#tab-radar .mvpclub-radar-settings td:first-child{flex:1;}
+#tab-radar .mvpclub-radar-settings input[type="text"]{width:100%;}
+#tab-radar .mvpclub-radar-settings input[type="range"]{flex:1;}
+#tab-radar .mvpclub-radar-settings output{width:3em;text-align:right;display:block;}
+#mvpclub-radar-preview{display:block;width:250px;max-width:100%;margin:0 0 20px 0;}
+#birthplace_country.mvpclub-emoji-select{width:4em;}
+#birthplace_city{width:21em;}
+.mvpclub-birthdate-wrap{display:flex;align-items:center;width:25em;gap:0.5em;}
+.mvpclub-birthdate-wrap input{width:8em;}
+.wp-list-table .column-image{width:40px;}
+.wp-list-table .column-image img{width:32px;height:auto;}
+.mvpclub-characteristic-list{list-style:none;margin:0;padding:0;}
+.mvpclub-characteristic-list li{margin-bottom:4px;}

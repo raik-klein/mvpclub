@@ -4,13 +4,15 @@ Das **mvpclub.de Plugin** erweitert WordPress um maßgeschneiderte Funktionen f�
 
 ## Funktionen
 
-- ✅ Shortcodes für dynamische Spielerinfos (z. B. Alter, Position, Leistungsdaten)
+- ✅ Shortcodes für dynamische Spielerinfos (z. B. Alter, Position, Statistik, Rolle)
+- Neu: Platzhalter `[bild-url]` liefert die Bild-URL eines Spielers
+- Neu: Shortcodes `[staerken]` und `[schwaechen]` geben ProCon-Listen aus
 - 📊 Custom Editor.Blöcke für Scoutingberichte und Spielerstatistiken
 - 🔍 Verbesserte SEO-Auszeichnung mit strukturierten Daten
 - 🧠 Optimiert für datengetriebene Fußballinhalte
 
 ## Installation
 
-1. Klone das Repository oder lade den Plugin-Ordner herunter:
-   ```bash
-   git clone https://github.com/dein-benutzername/mvpclub-plugin.git
+1. Klone das Repository oder lade den Plugin-Ordner herunter
+2. Kopiere den Plugin-Ordner nach `wp-content/plugins` deiner WordPress-Installation.
+3. Aktiviere das Plugin anschließend in WordPress unter "Plugins".
