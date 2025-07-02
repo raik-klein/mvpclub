@@ -10,6 +10,14 @@ function mvpclub_register_player_cpt() {
         'labels' => array(
             'name'          => 'Spieler',
             'singular_name' => 'Spieler',
+            'add_new'       => 'Spieler hinzufügen',
+            'add_new_item'  => 'Spieler hinzufügen',
+            'edit_item'     => 'Spieler bearbeiten',
+            'new_item'      => 'Neuer Spieler',
+            'view_item'     => 'Spieler ansehen',
+            'search_items'  => 'Spieler durchsuchen',
+            'not_found'     => 'Kein Spieler gefunden',
+            'not_found_in_trash' => 'Kein Spieler im Papierkorb',
         ),
         'public'      => true,
         'has_archive' => false,
@@ -79,6 +87,10 @@ function mvpclub_player_fields() {
         'image'            => 'Bild',
         'radar_chart'      => 'Radar Chart',
     );
+}
+
+function mvpclub_player_info_keys() {
+    return array('image','birthdate','nationality','birthplace','position','detail_position','height','foot','club','market_value');
 }
 
 /**
@@ -214,7 +226,7 @@ function mvpclub_player_placeholders($player_id) {
         '[geburtsdatum]'    => isset($data['birthdate']) ? $data['birthdate'] : '',
         '[geburtsort]'      => isset($data['birthplace']) ? $data['birthplace'] : '',
         '[alter]'           => $age_text,
-        '[groesse]'         => isset($data['height']) ? $data['height'] : '',
+        '[groesse]'         => isset($data['height']) && $data['height'] !== '' ? $data['height'] . ' cm' : '',
         '[nationalitaet]'   => isset($data['nationality']) ? $data['nationality'] : '',
         '[position]'        => isset($data['position']) ? $data['position'] : '',
         '[detailposition]'  => mvpclub_format_detail_position(isset($data['detail_position']) ? $data['detail_position'] : ''),
@@ -445,6 +457,11 @@ function mvpclub_player_meta_box($post) {
             echo '<p><button type="button" class="button mvpclub-player-image-select">Bild auswählen</button> ';
             echo '<button type="button" class="button mvpclub-player-image-remove">Bild entfernen</button></p>';
             echo '</td></tr>';
+        } elseif ($key === 'height') {
+            $val = intval($value) ? intval($value) : 180;
+            echo '<tr><th><label for="height">' . esc_html($label) . '</label></th><td>';
+            echo '<input type="range" name="height" id="height" min="150" max="210" value="' . esc_attr($val) . '" oninput="this.nextElementSibling.value=this.value + \" cm\"" /> ';
+            echo '<output>' . esc_html($val) . ' cm</output></td></tr>';
         } else {
             echo '<tr><th><label for="' . esc_attr($key) . '">' . esc_html($label) . '</label></th>';
             echo '<td><input type="text" name="' . esc_attr($key) . '" id="' . esc_attr($key) . '" value="' . esc_attr($value) . '" class="regular-text" /></td></tr>';
@@ -530,13 +547,22 @@ add_action('save_post_mvpclub-spieler', function($post_id) {
                 delete_post_meta($post_id, 'image');
             }
         } elseif ($key === 'birthplace') {
-            $country = isset($_POST['birthplace_country']) ? wp_unslash($_POST['birthplace_country']) : '';
-            $city = isset($_POST['birthplace_city']) ? sanitize_text_field($_POST['birthplace_city']) : '';
-            $val = trim($country . ' ' . $city);
-            if ($val !== '') {
-                update_post_meta($post_id, 'birthplace', $val);
+            if (isset($_POST['birthplace'])) {
+                $val = sanitize_text_field($_POST['birthplace']);
+                if ($val !== '') {
+                    update_post_meta($post_id, 'birthplace', $val);
+                } else {
+                    delete_post_meta($post_id, 'birthplace');
+                }
             } else {
-                delete_post_meta($post_id, 'birthplace');
+                $country = isset($_POST['birthplace_country']) ? wp_unslash($_POST['birthplace_country']) : '';
+                $city = isset($_POST['birthplace_city']) ? sanitize_text_field($_POST['birthplace_city']) : '';
+                $val = trim($country . ' ' . $city);
+                if ($val !== '') {
+                    update_post_meta($post_id, 'birthplace', $val);
+                } else {
+                    delete_post_meta($post_id, 'birthplace');
+                }
             }
         } elseif ($key === 'detail_position') {
             if (isset($_POST['detail_position']) && is_array($_POST['detail_position'])) {
@@ -908,17 +934,29 @@ function mvpclub_render_statistik_settings_page() {
 /**
  * Add admin columns for player meta fields
  */
-add_filter('manage_mvpclub_player_posts_columns', 'mvpclub_player_admin_columns');
+add_filter('manage_mvpclub-spieler_posts_columns', 'mvpclub_player_admin_columns');
 function mvpclub_player_admin_columns($columns) {
+    $info = mvpclub_player_info_keys();
     $fields = mvpclub_player_fields();
-    foreach ($fields as $key => $label) {
-        $columns[$key] = $label;
+    $new = array();
+    foreach ($columns as $key => $label) {
+        if ($key === 'date') {
+            $new['modified'] = 'Zuletzt Bearbeitet';
+        }
+        $new[$key] = $label;
     }
-    return $columns;
+    foreach ($info as $key) {
+        $new[$key] = isset($fields[$key]) ? $fields[$key] : $key;
+    }
+    return $new;
 }
 
-add_action('manage_mvpclub_player_posts_custom_column', 'mvpclub_player_custom_column', 10, 2);
+add_action('manage_mvpclub-spieler_posts_custom_column', 'mvpclub_player_custom_column', 10, 2);
 function mvpclub_player_custom_column($column, $post_id) {
+    if ($column === 'modified') {
+        echo get_the_modified_date('d.m.Y', $post_id);
+        return;
+    }
     $fields = mvpclub_player_fields();
     if (isset($fields[$column])) {
         if ($column === 'image') {
@@ -934,11 +972,19 @@ function mvpclub_player_custom_column($column, $post_id) {
     }
 }
 
-add_filter('manage_edit-mvpclub_player_sortable_columns', 'mvpclub_player_sortable_columns');
+add_filter('manage_edit-mvpclub-spieler_sortable_columns', 'mvpclub_player_sortable_columns');
 function mvpclub_player_sortable_columns($columns) {
-    $fields = mvpclub_player_fields();
-    foreach ($fields as $key => $label) {
+    $info = mvpclub_player_info_keys();
+    foreach ($info as $key) {
         $columns[$key] = $key;
     }
+    $columns['modified'] = 'modified';
     return $columns;
 }
+
+add_action('pre_get_posts', function($query){
+    if (!is_admin() || !$query->is_main_query()) return;
+    if ($query->get('post_type') === 'mvpclub-spieler' && $query->get('orderby') === 'modified') {
+        $query->set('orderby', 'modified');
+    }
+});
