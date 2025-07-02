@@ -57,7 +57,11 @@ add_shortcode('bewertung', function($atts = []) {
     if ($post_id) {
         $rating = get_post_meta($post_id, 'rating', true);
     }
-    return $rating !== '' ? esc_html($rating) : '';
+    if ($rating !== '') {
+        $rating = number_format((float)$rating, 1);
+        return esc_html($rating);
+    }
+    return '';
 });
 
 add_shortcode('statistik', function($atts = []) {
