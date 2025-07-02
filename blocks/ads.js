@@ -3,7 +3,7 @@
     const { __ } = i18n;
 
     registerBlockType('mvpclub/ads', {
-        title: __('mvpclub.de Werbung', 'mvpclub'),
+        title: __('Werbung', 'mvpclub'),
         icon: 'megaphone',
         category: 'mvpclub',
 

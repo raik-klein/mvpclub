@@ -1,9 +1,9 @@
 <?php
 /*
 Plugin Name: mvpclub
-Description: Kompaktes Plugin mit Shortcodes, Gutenberg-Blöcken und Backend-Styling
+Description: Das mvpclub.de Plugin mit Shortcodes, Gutenberg-Blöcken und Admin-Menü.
 Author: Raik Klein
-Version: 3.0
+Version: 3.1.1
 */
 
 defined('ABSPATH') || exit;

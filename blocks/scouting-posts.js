@@ -4,7 +4,7 @@
     const { createElement: el } = element;
 
     registerBlockType('mvpclub/scouting-posts', {
-        title: __('mvpclub.de Scouting Posts', 'mvpclub'),
+        title: __('Scouting-Beitragsliste', 'mvpclub'),
         icon: 'media-document',
         category: 'mvpclub',
 

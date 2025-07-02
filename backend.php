@@ -6,7 +6,7 @@ add_action('admin_menu', function () {
     add_menu_page(
         'MVP Zentrale',
         'MVP',
-        'manage_options',
+        'edit_posts', // <-- Hier geändert
         'mvpclub-zentrale',
         'mvpclub_render_zentrale_page',
         'dashicons-star-filled',
@@ -17,7 +17,7 @@ add_action('admin_menu', function () {
         'mvpclub-zentrale',
         'Scouting-Block',
         'Scouting-Block',
-        'manage_options',
+        'edit_posts', // <-- Hier geändert
         'mvpclub-block-scouting',
         'mvpclub_render_block_page'
     );
@@ -26,7 +26,7 @@ add_action('admin_menu', function () {
         'mvpclub-zentrale',
         'Shortcodes',
         'Shortcodes',
-        'manage_options',
+        'edit_posts', // <-- Hier geändert
         'mvpclub-shortcodes',
         'mvpclub_render_shortcodes_page'
     );
@@ -80,12 +80,12 @@ function mvpclub_render_shortcodes_page() {
 add_action('admin_menu', function() {
     // „mvpclub-main“ müsste der Slug deines Haupt-Menüs sein
     add_submenu_page(
-        'mvpclub-main',             // Parent-Slug
-        'Werbung-Einstellungen',    // Page Title
-        'Werbung',                  // Menü-Label
-        'manage_options',           // Capability
-        'mvpclub-ads-settings',     // Menü-Slug
-        'mvpclub_render_ads_settings_page' // Callback
+        'mvpclub-main',
+        'Werbung-Einstellungen',
+        'Werbung',
+        'edit_posts', // <-- Hier geändert
+        'mvpclub-ads-settings',
+        'mvpclub_render_ads_settings_page'
     );
 });
 

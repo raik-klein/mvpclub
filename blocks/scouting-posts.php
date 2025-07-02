@@ -67,7 +67,7 @@ function mvpclub_render_scouting_posts($attributes = [], $content = '') {
             // Listeneintrag: Flagge, Titel (verlinkt), Bewertung
             echo '<li style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0;">';
             echo '<span style="margin-right: 8px;">' . esc_html($flag) . '</span>';
-            echo '<a href="' . esc_url(get_permalink()) . '" style="text-align: left; flex-grow: 1;">' . esc_html(get_the_title()) . '</a>';
+            echo '<a href="' . esc_url(get_permalink()) . '" style="text-align: left; flex-grow: 1; text-decoration: none; color: inherit;">' . esc_html(get_the_title()) . '</a>';
             echo '<span style="text-align: right; font-weight: bold; white-space: nowrap;">' . esc_html($rating) . '</span>';
             echo '</li>';
 
