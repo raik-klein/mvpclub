@@ -159,4 +159,30 @@ jQuery(function($){
             });
         };
     }
+
+    // Attribute manager
+    function addAttrRow(group){
+        var table = $('#attr-table-'+group+' tbody');
+        var template = $($('#attr-row-template').html());
+        var next = parseInt(table.data('next')) || 1;
+        template.find('.attr-id').text(next);
+        template.find('.attr-name').attr('name','attr_name['+group+'][0]');
+        var parentSel = template.find('.attr-parent').attr('name','attr_parent['+group+'][0]');
+        // clone parent options
+        var opts = $('#attr-table-'+group+' tbody select:first').find('option').clone();
+        parentSel.empty().append(opts);
+        template.find('.attr-delete').attr('name','attr_delete['+group+'][0]');
+        table.append(template);
+        table.data('next', next + 1);
+    }
+
+    $(document).on('click','.mvpclub-add-attr',function(e){
+        e.preventDefault();
+        addAttrRow($(this).data('group'));
+    });
+
+    $(document).on('click','.mvpclub-delete-attr',function(e){
+        e.preventDefault();
+        $(this).closest('tr').remove();
+    });
 });
