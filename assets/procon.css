@@ -1,0 +1,2 @@
+.procon{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px;}
+.procon li{background:#f2f2f2;border-radius:4px;padding:4px 8px;max-width:100%;}
