@@ -72,6 +72,7 @@ function mvpclub_player_fields() {
         'foot'        => 'Fuß',
         'agent'       => 'Berater',
         'club'        => 'Verein',
+        'image'       => 'Bild',
         'radar_chart' => 'Radar Chart',
     );
 }
@@ -81,13 +82,22 @@ function mvpclub_player_fields() {
  */
 add_action('init', function() {
     foreach (mvpclub_player_fields() as $key => $label) {
-        register_post_meta('mvpclub-spieler', $key, array(
-            'type'              => 'string',
-            'single'            => true,
-            'sanitize_callback' => $key === 'radar_chart' ? null : 'sanitize_text_field',
-            'show_in_rest'      => true,
-            'auth_callback'     => function() { return current_user_can('edit_posts'); },
-        ));
+        $args = array(
+            'single'       => true,
+            'show_in_rest' => true,
+            'auth_callback'=> function() { return current_user_can('edit_posts'); },
+        );
+        if ($key === 'radar_chart') {
+            $args['type'] = 'string';
+            $args['sanitize_callback'] = null;
+        } elseif ($key === 'image') {
+            $args['type'] = 'integer';
+            $args['sanitize_callback'] = 'absint';
+        } else {
+            $args['type'] = 'string';
+            $args['sanitize_callback'] = 'sanitize_text_field';
+        }
+        register_post_meta('mvpclub-spieler', $key, $args);
     }
 });
 
@@ -124,6 +134,15 @@ function mvpclub_player_admin_scripts($hook) {
         array(),
         filemtime(plugin_dir_path(__FILE__) . 'assets/nationality-autocomplete.css')
     );
+
+    wp_enqueue_media();
+    wp_enqueue_script(
+        'mvpclub-player-image',
+        plugins_url('assets/player-image.js', __FILE__),
+        array('jquery'),
+        filemtime(plugin_dir_path(__FILE__) . 'assets/player-image.js'),
+        true
+    );
 }
 
 function mvpclub_player_meta_box($post) {
@@ -143,6 +162,19 @@ function mvpclub_player_meta_box($post) {
                 echo '<td><input type="range" name="radar_chart_value' . $i . '" min="0" max="100" value="' . esc_attr($v) . '" oninput="this.nextElementSibling.value=this.value" />';
                 echo '<output>' . esc_html($v) . '</output></td></tr>';
             }
+        } elseif ($key === 'image') {
+            $img_id  = intval($value);
+            $preview = $img_id ? wp_get_attachment_image_src($img_id, 'thumbnail') : false;
+            echo '<tr><th><label for="mvpclub-player-image">' . esc_html($label) . '</label></th><td>';
+            echo '<div class="mvpclub-player-image-preview">';
+            if ($preview) {
+                echo '<img src="' . esc_url($preview[0]) . '" style="max-width:150px;height:auto;" />';
+            }
+            echo '</div>';
+            echo '<input type="hidden" name="image" id="mvpclub-player-image" value="' . esc_attr($img_id) . '" />';
+            echo '<p><button type="button" class="button mvpclub-player-image-select">Bild auswählen</button> ';
+            echo '<button type="button" class="button mvpclub-player-image-remove">Bild entfernen</button></p>';
+            echo '</td></tr>';
         } else {
             echo '<tr><th><label for="' . esc_attr($key) . '">' . esc_html($label) . '</label></th>';
             echo '<td><input type="text" name="' . esc_attr($key) . '" id="' . esc_attr($key) . '" value="' . esc_attr($value) . '" class="regular-text" /></td></tr>';
@@ -169,6 +201,13 @@ add_action('save_post_mvpclub-spieler', function($post_id) {
             }
             $chart = array('labels' => $labels, 'values' => $values);
             update_post_meta($post_id, 'radar_chart', wp_json_encode($chart));
+        } elseif ($key === 'image') {
+            $img = isset($_POST['image']) ? intval($_POST['image']) : 0;
+            if ($img) {
+                update_post_meta($post_id, 'image', $img);
+            } else {
+                delete_post_meta($post_id, 'image');
+            }
         } elseif (isset($_POST[$key])) {
             update_post_meta($post_id, $key, sanitize_text_field($_POST[$key]));
         }
@@ -284,7 +323,12 @@ function mvpclub_render_player_info($attributes) {
         $data[$key] = get_post_meta($player_id, $key, true);
     }
     $title = get_the_title($player_id);
-    $img   = get_the_post_thumbnail($player_id, 'medium', array('style' => 'max-width:100%;height:auto;'));
+    $custom_image_id = intval(get_post_meta($player_id, 'image', true));
+    if ($custom_image_id) {
+        $img = wp_get_attachment_image($custom_image_id, 'medium', false, array('style' => 'max-width:100%;height:auto;'));
+    } else {
+        $img = get_the_post_thumbnail($player_id, 'medium', array('style' => 'max-width:100%;height:auto;'));
+    }
     $bg    = get_option('mvpclub_player_bg_color', '#f9f9f9');
     $text  = get_option('mvpclub_player_text_color', '#000000');
 
@@ -330,7 +374,16 @@ add_action('manage_mvpclub_player_posts_custom_column', 'mvpclub_player_custom_c
 function mvpclub_player_custom_column($column, $post_id) {
     $fields = mvpclub_player_fields();
     if (isset($fields[$column])) {
-        echo esc_html(get_post_meta($post_id, $column, true));
+        if ($column === 'image') {
+            $img_id = intval(get_post_meta($post_id, 'image', true));
+            if ($img_id) {
+                echo wp_get_attachment_image($img_id, 'thumbnail');
+            } else {
+                echo get_the_post_thumbnail($post_id, 'thumbnail');
+            }
+        } else {
+            echo esc_html(get_post_meta($post_id, $column, true));
+        }
     }
 }
 
