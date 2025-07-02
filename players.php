@@ -178,3 +178,32 @@ function mvpclub_render_player_info($attributes) {
     echo '</ul></div>';
     return ob_get_clean();
 }
+
+/**
+ * Add admin columns for player meta fields
+ */
+add_filter('manage_mvpclub_player_posts_columns', 'mvpclub_player_admin_columns');
+function mvpclub_player_admin_columns($columns) {
+    $fields = mvpclub_player_fields();
+    foreach ($fields as $key => $label) {
+        $columns[$key] = $label;
+    }
+    return $columns;
+}
+
+add_action('manage_mvpclub_player_posts_custom_column', 'mvpclub_player_custom_column', 10, 2);
+function mvpclub_player_custom_column($column, $post_id) {
+    $fields = mvpclub_player_fields();
+    if (isset($fields[$column])) {
+        echo esc_html(get_post_meta($post_id, $column, true));
+    }
+}
+
+add_filter('manage_edit-mvpclub_player_sortable_columns', 'mvpclub_player_sortable_columns');
+function mvpclub_player_sortable_columns($columns) {
+    $fields = mvpclub_player_fields();
+    foreach ($fields as $key => $label) {
+        $columns[$key] = $key;
+    }
+    return $columns;
+}
