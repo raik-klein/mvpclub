@@ -15,7 +15,7 @@
         },
         edit: function(props) {
             var players = useSelect(function(select) {
-                return select('core').getEntityRecords('postType', 'mvpclub_player', { per_page: -1 });
+                return select('core').getEntityRecords('postType', 'mvpclub-spieler', { per_page: -1 });
             }, []);
 
             if (!players) {

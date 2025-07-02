@@ -2,11 +2,11 @@
 if (!defined('ABSPATH')) exit;
 
 /**
- * Register the "mvpclub_player" post type for the player database
+ * Register the "mvpclub-spieler" post type for the player database
  */
 add_action('init', 'mvpclub_register_player_cpt');
 function mvpclub_register_player_cpt() {
-    register_post_type('mvpclub_player', array(
+    register_post_type('mvpclub-spieler', array(
         'labels' => array(
             'name'          => 'Spieler',
             'singular_name' => 'Spieler',
@@ -18,6 +18,45 @@ function mvpclub_register_player_cpt() {
         'supports'    => array('title', 'thumbnail'),
         'show_in_rest'=> true,
     ));
+}
+
+/**
+ * Migrate old "mvpclub_player" posts to the new slug.
+ */
+add_action('init', 'mvpclub_migrate_player_cpt', 20);
+function mvpclub_migrate_player_cpt() {
+    if (get_option('mvpclub_spieler_migrated')) {
+        return;
+    }
+
+    global $wpdb;
+    // migrate from the original "mvpclub_player" slug
+    $count = $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(ID) FROM {$wpdb->posts} WHERE post_type = %s",
+        'mvpclub_player'
+    ));
+    if ($count > 0) {
+        $wpdb->update(
+            $wpdb->posts,
+            array('post_type' => 'mvpclub-spieler'),
+            array('post_type' => 'mvpclub_player')
+        );
+    }
+
+    // migrate from the interim "mvpclub-player" slug
+    $count = $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(ID) FROM {$wpdb->posts} WHERE post_type = %s",
+        'mvpclub-player'
+    ));
+    if ($count > 0) {
+        $wpdb->update(
+            $wpdb->posts,
+            array('post_type' => 'mvpclub-spieler'),
+            array('post_type' => 'mvpclub-player')
+        );
+    }
+
+    update_option('mvpclub_spieler_migrated', 1);
 }
 
 /**
@@ -41,7 +80,7 @@ function mvpclub_player_fields() {
  */
 add_action('init', function() {
     foreach (mvpclub_player_fields() as $key => $label) {
-        register_post_meta('mvpclub_player', $key, array(
+        register_post_meta('mvpclub-spieler', $key, array(
             'type'              => 'string',
             'single'            => true,
             'sanitize_callback' => 'sanitize_text_field',
@@ -55,7 +94,7 @@ add_action('init', function() {
  * Add meta box for player details
  */
 add_action('add_meta_boxes', function() {
-    add_meta_box('mvpclub_player_details', 'Spielerdaten', 'mvpclub_player_meta_box', 'mvpclub_player');
+    add_meta_box('mvpclub_player_details', 'Spielerdaten', 'mvpclub_player_meta_box', 'mvpclub-spieler');
 });
 
 /**
@@ -100,7 +139,7 @@ function mvpclub_player_meta_box($post) {
 /**
  * Save meta box values
  */
-add_action('save_post_mvpclub_player', function($post_id) {
+add_action('save_post_mvpclub-spieler', function($post_id) {
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
     if (!isset($_POST['mvpclub_player_nonce']) || !wp_verify_nonce($_POST['mvpclub_player_nonce'], 'mvpclub_save_player')) return;
     if (!current_user_can('edit_post', $post_id)) return;
@@ -116,7 +155,7 @@ add_action('save_post_mvpclub_player', function($post_id) {
  * Add submenu pages for the player database and scouting report settings
  */
 add_action('admin_menu', function() {
-    add_submenu_page('mvpclub-main', 'Spielerdatenbank', 'Spielerdatenbank', 'edit_posts', 'edit.php?post_type=mvpclub_player');
+    add_submenu_page('mvpclub-main', 'Spielerdatenbank', 'Spielerdatenbank', 'edit_posts', 'edit.php?post_type=mvpclub-spieler');
     add_submenu_page('mvpclub-main', 'Scoutingberichte', 'Scoutingberichte', 'edit_posts', 'mvpclub-scout-settings', 'mvpclub_render_scout_settings_page');
 });
 
@@ -190,14 +229,14 @@ function mvpclub_render_scout_settings_page() {
 add_action('init', 'mvpclub_register_player_info_block');
 function mvpclub_register_player_info_block() {
     wp_register_script(
-        'mvpclub-player-info-editor-script',
+        'mvpclub-spieler-info-editor-script',
         plugins_url('blocks/player-info.js', __FILE__),
         array('wp-blocks', 'wp-element', 'wp-i18n', 'wp-components', 'wp-data'),
         filemtime(plugin_dir_path(__FILE__) . 'blocks/player-info.js')
     );
 
     register_block_type('mvpclub/player-info', array(
-        'editor_script'   => 'mvpclub-player-info-editor-script',
+        'editor_script'   => 'mvpclub-spieler-info-editor-script',
         'render_callback' => 'mvpclub_render_player_info',
         'attributes'      => array(
             'playerId' => array(
