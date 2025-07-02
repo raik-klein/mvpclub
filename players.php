@@ -136,16 +136,9 @@ function mvpclub_player_placeholders($player_id) {
         $chart = json_decode($data['radar_chart'], true);
         if (!empty($chart['labels']) && !empty($chart['values'])) {
             $chart_id = 'radar-chart-' . $player_id;
+            $chart_src = plugins_url('assets/chart.js', __FILE__);
             $chart_html = '<canvas id="' . esc_attr($chart_id) . '" width="300" height="300"></canvas>';
-            wp_enqueue_script(
-                'chartjs',
-                plugins_url('assets/chart.js', __FILE__),
-                array(),
-                filemtime(plugin_dir_path(__FILE__) . 'assets/chart.js'),
-                true
-            );
-            $inline = 'document.addEventListener("DOMContentLoaded",function(){var c=document.getElementById("' . esc_js($chart_id) . '");if(c){new Chart(c,{type:"radar",data:{labels:' . wp_json_encode($chart['labels']) . ',datasets:[{label:"' . esc_js($title) . '",data:' . wp_json_encode($chart['values']) . ',backgroundColor:"rgba(54,162,235,0.2)",borderColor:"rgba(54,162,235,1)"}]},options:{scales:{r:{min:0,max:100,beginAtZero:true}}});}});';
-            wp_add_inline_script('chartjs', $inline);
+            $chart_html .= '<script>(function(){function r(){var c=document.getElementById("' . esc_js($chart_id) . '");if(!c||typeof Chart==="undefined")return;new Chart(c,{type:"radar",data:{labels:' . wp_json_encode($chart['labels']) . ',datasets:[{label:"' . esc_js($title) . '",data:' . wp_json_encode($chart['values']) . ',backgroundColor:"rgba(54,162,235,0.2)",borderColor:"rgba(54,162,235,1)"}]},options:{scales:{r:{min:0,max:100,beginAtZero:true}}});}if(typeof Chart==="undefined"){var s=document.createElement("script");s.src="' . esc_url($chart_src) . '";s.onload=r;document.body.appendChild(s);}else{r();}})();</script>';
         }
     }
 
@@ -238,24 +231,6 @@ function mvpclub_player_admin_scripts($hook) {
     remove_action('admin_print_scripts', 'print_emoji_detection_script');
     remove_action('admin_print_styles', 'print_emoji_styles');
 
-    wp_enqueue_script(
-        'mvpclub-nationality-autocomplete',
-        plugins_url('assets/nationality-autocomplete.js', __FILE__),
-        array('jquery'),
-        filemtime(plugin_dir_path(__FILE__) . 'assets/nationality-autocomplete.js'),
-        true
-    );
-
-    wp_localize_script('mvpclub-nationality-autocomplete', 'mvpclubPlayers', array(
-        'countriesUrl' => plugins_url('assets/countries.json', __FILE__),
-    ));
-
-    wp_enqueue_style(
-        'mvpclub-nationality-autocomplete',
-        plugins_url('assets/nationality-autocomplete.css', __FILE__),
-        array(),
-        filemtime(plugin_dir_path(__FILE__) . 'assets/nationality-autocomplete.css')
-    );
 
     wp_enqueue_media();
     wp_enqueue_script(
@@ -353,6 +328,17 @@ function mvpclub_player_meta_box($post) {
                 echo '<option value="' . esc_attr($op) . '"' . $sel . '>' . esc_html($op) . '</option>';
             }
             echo '</select></td></tr>';
+        } elseif ($key === 'nationality') {
+            $countries = mvpclub_get_country_map();
+            echo '<tr><th><label for="nationality">' . esc_html($label) . '</label></th><td>';
+            echo '<select name="nationality" id="nationality">';
+            echo '<option value=""></option>';
+            foreach ($countries as $c) {
+                $val = $c['emoji'] . ' ' . $c['name'];
+                $sel = $value === $val ? ' selected' : '';
+                echo '<option value="' . esc_attr($val) . '"' . $sel . '>' . esc_html($val) . '</option>';
+            }
+            echo '</select></td></tr>';
         } elseif ($key === 'birthplace') {
             $country = '';
             $city = $value;
@@ -376,6 +362,16 @@ function mvpclub_player_meta_box($post) {
             $options = array('Tor','Abwehr','Mittelfeld','Sturm');
             echo '<tr><th><label for="position">' . esc_html($label) . '</label></th><td>';
             echo '<select name="position" id="position">';
+            echo '<option value="">-</option>';
+            foreach ($options as $op) {
+                $sel = $op === $value ? ' selected' : '';
+                echo '<option value="' . esc_attr($op) . '"' . $sel . '>' . esc_html($op) . '</option>';
+            }
+            echo '</select></td></tr>';
+        } elseif ($key === 'foot') {
+            $options = array('Links','Rechts','Beidfüßig');
+            echo '<tr><th><label for="foot">' . esc_html($label) . '</label></th><td>';
+            echo '<select name="foot" id="foot">';
             echo '<option value="">-</option>';
             foreach ($options as $op) {
                 $sel = $op === $value ? ' selected' : '';
