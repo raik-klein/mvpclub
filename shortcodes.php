@@ -68,3 +68,11 @@ add_shortcode('statistik', function($atts = []) {
     return mvpclub_generate_statistik_table($json);
 });
 
+add_shortcode('spielstil', function($atts = []) {
+    $atts = shortcode_atts(['id' => null], $atts);
+    $post_id = $atts['id'] ? intval($atts['id']) : get_the_ID();
+    if (!$post_id) return '';
+    $val = get_post_meta($post_id, 'spielstil', true);
+    return $val !== '' ? esc_html($val) : '';
+});
+

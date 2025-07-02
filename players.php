@@ -74,6 +74,7 @@ function mvpclub_player_fields() {
         'club'             => 'Verein',
         'market_value'     => 'Marktwert',
         'rating'           => 'Bewertung',
+        'spielstil'        => 'Spielstil',
         'performance_data' => 'Statistik',
         'image'            => 'Bild',
         'radar_chart'      => 'Radar Chart',
@@ -174,6 +175,7 @@ function mvpclub_player_placeholders($player_id) {
         '[verein]'          => isset($data['club']) ? $data['club'] : '',
         '[marktwert]'       => isset($data['market_value']) ? $data['market_value'] : '',
         '[bewertung]'       => isset($data['rating']) ? $data['rating'] : '',
+        '[spielstil]'       => isset($data['spielstil']) ? $data['spielstil'] : '',
         '[bild]'            => $img,
         '[bild-url]'        => $img_url,
         '[statistik]'       => $statistik_html,
@@ -280,7 +282,7 @@ function mvpclub_player_meta_box($post) {
     echo '<div id="mvpclub-player-tabs">';
     echo '<h2 class="nav-tab-wrapper">';
     echo '<a href="#" class="nav-tab nav-tab-active" data-tab="info">Information</a>';
-    echo '<a href="#" class="nav-tab" data-tab="rating">Bewertung</a>';
+    echo '<a href="#" class="nav-tab" data-tab="scouting">Scouting</a>';
     echo '<a href="#" class="nav-tab" data-tab="statistik">Statistik</a>';
     echo '<a href="#" class="nav-tab" data-tab="radar">Radar</a>';
     echo '</h2>';
@@ -403,8 +405,8 @@ function mvpclub_player_meta_box($post) {
     }
     echo '</table></div>';
 
-    // Rating Tab
-    echo '<div id="tab-rating" class="mvpclub-tab-content"><table class="form-table">';
+    // Scouting Tab
+    echo '<div id="tab-scouting" class="mvpclub-tab-content"><table class="form-table">';
     $rating = isset($values['rating']) && $values['rating'] !== '' ? $values['rating'] : '3.0';
     echo '<tr><th><label for="rating">' . esc_html($fields['rating']) . '</label></th><td><input type="range" name="rating" id="rating" min="1" max="5" step="0.5" value="' . esc_attr($rating) . '" oninput="this.nextElementSibling.value=this.value" /> <output>' . esc_html($rating) . '</output><br />';
     echo '<pre class="mvpclub-rating-info" style="margin-top:4px;white-space:pre-wrap;">5.0 (S): Weltklassespieler
@@ -416,6 +418,8 @@ function mvpclub_player_meta_box($post) {
 2.0 (C): Top-9-Kaderspieler
 1.5 (D+): RDW-Schlüsselspieler
 1.0 (D): RDW-Kaderspieler</pre></td></tr>';
+    $spielstil = isset($values['spielstil']) ? $values['spielstil'] : '';
+    echo '<tr><th><label for="spielstil">' . esc_html($fields['spielstil']) . '</label></th><td><textarea name="spielstil" id="spielstil" rows="4" class="large-text">' . esc_textarea($spielstil) . '</textarea></td></tr>';
     echo '</table></div>';
 
     // Performance Tab
@@ -437,7 +441,7 @@ function mvpclub_player_meta_box($post) {
     echo '<p><button type="button" class="button" id="add-statistik-row">Zeile hinzufügen</button></p></div>';
 
     // Radar Tab
-    echo '<div id="tab-radar" class="mvpclub-tab-content"><div class="mvpclub-radar-flex"><canvas id="mvpclub-radar-preview" width="400" height="400"></canvas><table class="form-table mvpclub-radar-settings">';
+    echo '<div id="tab-radar" class="mvpclub-tab-content"><div class="mvpclub-radar-flex"><canvas id="mvpclub-radar-preview" width="250" height="250"></canvas><table class="form-table mvpclub-radar-settings">';
     $chart = json_decode($values['radar_chart'], true);
     $labels = isset($chart['labels']) ? (array) $chart['labels'] : array_fill(0, 6, '');
     $values_radar = isset($chart['values']) ? (array) $chart['values'] : array_fill(0, 6, 0);
@@ -508,7 +512,7 @@ add_action('save_post_mvpclub-spieler', function($post_id) {
                 for ($i = 0; $i < $count; $i++) {
                     $row = array(
                         'Saison'     => sanitize_text_field($_POST['perf_saison'][$i]),
-                        'Wettbewerb' => sanitize_text_field(wp_unslash($_POST['perf_competition'][$i])),
+                        'Wettbewerb' => wp_unslash($_POST['perf_competition'][$i]),
                         'Spiele'     => intval($_POST['perf_games'][$i]),
                         'Tore'       => intval($_POST['perf_goals'][$i]),
                         'Assists'    => intval($_POST['perf_assists'][$i]),
@@ -519,7 +523,7 @@ add_action('save_post_mvpclub-spieler', function($post_id) {
                     }
                 }
             }
-            update_post_meta($post_id, 'performance_data', wp_json_encode($perf));
+            update_post_meta($post_id, 'performance_data', wp_json_encode($perf, JSON_UNESCAPED_UNICODE));
         } elseif (isset($_POST[$key])) {
             update_post_meta($post_id, $key, sanitize_text_field($_POST[$key]));
         }
