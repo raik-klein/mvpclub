@@ -17,7 +17,7 @@ add_action('admin_menu', function () {
         'mvpclub-main',
         'Scouting-Block',
         'Scouting-Block',
-        'edit_posts', // <-- Hier geändert
+        'edit_posts',
         'mvpclub-block-scouting',
         'mvpclub_render_block_page'
     );
@@ -26,7 +26,7 @@ add_action('admin_menu', function () {
         'mvpclub-main',
         'Shortcodes',
         'Shortcodes',
-        'edit_posts', // <-- Hier geändert
+        'edit_posts',
         'mvpclub-shortcodes',
         'mvpclub_render_shortcodes_page'
     );
