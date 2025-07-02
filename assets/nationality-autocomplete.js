@@ -22,7 +22,7 @@
                     var item = $('<div class="item"></div>').text(c.emoji+' '+c.name).css({padding:'2px 4px', cursor:'pointer'}).appendTo(container);
                     item.on('mousedown', function(e){
                         e.preventDefault();
-                        input.val(c.name);
+                        input.val(c.emoji + ' ' + c.name);
                         container.hide();
                     });
                 });
