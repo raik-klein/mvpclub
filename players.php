@@ -355,11 +355,12 @@ add_action('admin_menu', function() {
 function mvpclub_render_scout_settings_page() {
     if (isset($_POST['mvpclub_scout_template']) && check_admin_referer('mvpclub_scout_settings', 'mvpclub_scout_nonce')) {
         update_option('mvpclub_scout_template', wp_kses_post(wp_unslash($_POST['mvpclub_scout_template'])));
+        update_option('mvpclub_scout_css', wp_strip_all_tags(wp_unslash($_POST['mvpclub_scout_css'])));
         echo '<div class="updated"><p>Einstellungen gespeichert.</p></div>';
     }
 
-    $default  = '<!-- wp:paragraph --><p>[spieler-name] - [verein]</p><!-- /wp:paragraph -->';
-    $template = get_option('mvpclub_scout_template', $default);
+    $template = get_option('mvpclub_scout_template', '<p>[spieler-name] - [verein]</p>');
+    $css      = get_option('mvpclub_scout_css', '');
 
     $placeholders = array(
         '[spieler-name]'  => 'Max Mustermann',
@@ -374,34 +375,16 @@ function mvpclub_render_scout_settings_page() {
     );
 
     $preview_html = str_replace(array_keys($placeholders), array_values($placeholders), $template);
-    $preview      = do_blocks($preview_html);
-
-    // Block editor assets.
-    wp_enqueue_script('wp-blocks');
-    wp_enqueue_script('wp-element');
-    wp_enqueue_script('wp-data');
-    wp_enqueue_script('wp-components');
-    wp_enqueue_script('wp-block-editor');
-    wp_enqueue_style('wp-edit-blocks');
-
-    wp_register_script(
-        'mvpclub-scout-editor',
-        plugins_url('assets/scout-editor.js', __FILE__),
-        array('wp-blocks', 'wp-element', 'wp-data', 'wp-block-editor'),
-        filemtime(plugin_dir_path(__FILE__) . 'assets/scout-editor.js'),
-        true
-    );
-    wp_localize_script('mvpclub-scout-editor', 'mvpclubScoutEditor', array('template' => $template));
-    wp_enqueue_script('mvpclub-scout-editor');
+    $preview      = '<style>' . esc_html($css) . '</style>' . wpautop($preview_html);
     ?>
     <div class="wrap">
         <h1>Scoutingberichte</h1>
         <form method="post" id="mvpclub-scout-form">
             <?php wp_nonce_field('mvpclub_scout_settings', 'mvpclub_scout_nonce'); ?>
-            <textarea id="mvpclub_scout_template" name="mvpclub_scout_template" style="display:none;">
-                <?php echo esc_textarea($template); ?>
-            </textarea>
-            <div id="mvpclub-block-editor" class="mvpclub-block-editor" style="min-height:200px;border:1px solid #ccd0d4;"></div>
+            <h2>HTML</h2>
+            <textarea id="mvpclub_scout_template" name="mvpclub_scout_template" rows="10" class="large-text code"><?php echo esc_textarea($template); ?></textarea>
+            <h2>CSS</h2>
+            <textarea id="mvpclub_scout_css" name="mvpclub_scout_css" rows="5" class="large-text code"><?php echo esc_textarea($css); ?></textarea>
             <p><?php esc_html_e('Platzhalter einfügen:', 'mvpclub'); ?>
                 <?php foreach ($placeholders as $tag => $sample) : ?>
                     <button type="button" class="insert-placeholder button" data-placeholder="<?php echo esc_attr($tag); ?>"><?php echo esc_html($tag); ?></button>
@@ -415,6 +398,16 @@ function mvpclub_render_scout_settings_page() {
             <?php echo $preview; ?>
         </div>
     </div>
+    <script>
+    jQuery(function($){
+        $('.insert-placeholder').on('click', function(){
+            var tag = $(this).data('placeholder');
+            var textarea = $('#mvpclub_scout_template');
+            textarea.val(textarea.val() + tag);
+            textarea.focus();
+        });
+    });
+    </script>
     <?php
 }
 
@@ -509,6 +502,9 @@ function mvpclub_render_player_info($attributes) {
 
     ob_start();
     echo '<div class="mvpclub-player-info" style="background:' . esc_attr($bg) . ';color:' . esc_attr($text) . ';padding:1em;">';
+    if (trim($css) !== '') {
+        echo '<style>' . esc_html($css) . '</style>';
+    }
     echo $content;
     echo '</div>';
     return ob_get_clean();
