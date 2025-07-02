@@ -9,7 +9,7 @@ jQuery(function($){
         return select;
     }
 
-    function addPerformanceRow(){
+    function addStatistikRow(){
         var row = $('<tr>')
             .append('<td><input type="text" name="perf_saison[]" /></td>')
             .append($('<td>').append(competitionSelect()))
@@ -17,16 +17,16 @@ jQuery(function($){
             .append('<td><input type="number" name="perf_goals[]" /></td>')
             .append('<td><input type="number" name="perf_assists[]" /></td>')
             .append('<td><input type="number" name="perf_minutes[]" /></td>')
-            .append('<td><button class="button remove-performance-row">X</button></td>');
-        $('#performance-data-table tbody').append(row);
+            .append('<td><button class="button remove-statistik-row">X</button></td>');
+        $('#statistik-data-table tbody').append(row);
     }
 
-    $(document).on('click', '#add-performance-row', function(e){
+    $(document).on('click', '#add-statistik-row', function(e){
         e.preventDefault();
-        addPerformanceRow();
+        addStatistikRow();
     });
 
-    $(document).on('click', '.remove-performance-row', function(e){
+    $(document).on('click', '.remove-statistik-row', function(e){
         e.preventDefault();
         $(this).closest('tr').remove();
     });
