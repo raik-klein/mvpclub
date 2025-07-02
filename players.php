@@ -172,6 +172,9 @@ function mvpclub_player_admin_scripts($hook) {
         filemtime(plugin_dir_path(__FILE__) . 'assets/player-admin.js'),
         true
     );
+    wp_localize_script('mvpclub-player-admin', 'mvpclubPlayerAdmin', array(
+        'competitions' => mvpclub_competition_labels(),
+    ));
 
     wp_enqueue_style(
         'mvpclub-player-admin',
@@ -284,7 +287,7 @@ function mvpclub_player_meta_box($post) {
     foreach ($perf as $row) {
         echo '<tr>';
         echo '<td><input type="text" name="perf_saison[]" value="' . esc_attr($row['Saison'] ?? '') . '" /></td>';
-        echo '<td><input type="text" name="perf_competition[]" value="' . esc_attr($row['Wettbewerb'] ?? '') . '" /></td>';
+        echo '<td>' . mvpclub_competition_select($row['Wettbewerb'] ?? '', 'perf_competition[]') . '</td>';
         echo '<td><input type="number" name="perf_games[]" value="' . esc_attr($row['Spiele'] ?? '') . '" /></td>';
         echo '<td><input type="number" name="perf_goals[]" value="' . esc_attr($row['Tore'] ?? '') . '" /></td>';
         echo '<td><input type="number" name="perf_assists[]" value="' . esc_attr($row['Assists'] ?? '') . '" /></td>';

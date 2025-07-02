@@ -1,8 +1,18 @@
 jQuery(function($){
+    function competitionSelect(){
+        var select = $('<select name="perf_competition[]">').append('<option value="">-</option>');
+        if(window.mvpclubPlayerAdmin && Array.isArray(window.mvpclubPlayerAdmin.competitions)){
+            window.mvpclubPlayerAdmin.competitions.forEach(function(l){
+                select.append('<option value="'+l+'">'+l+'</option>');
+            });
+        }
+        return select;
+    }
+
     function addPerformanceRow(){
         var row = $('<tr>')
             .append('<td><input type="text" name="perf_saison[]" /></td>')
-            .append('<td><input type="text" name="perf_competition[]" /></td>')
+            .append($('<td>').append(competitionSelect()))
             .append('<td><input type="number" name="perf_games[]" /></td>')
             .append('<td><input type="number" name="perf_goals[]" /></td>')
             .append('<td><input type="number" name="perf_assists[]" /></td>')
