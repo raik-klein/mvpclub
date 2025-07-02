@@ -98,28 +98,84 @@ function mvpclub_player_info_keys() {
     return array('image','birthdate','nationality','birthplace','position','detail_position','height','foot','club','market_value');
 }
 
-function mvpclub_get_roles() {
-    $roles = get_option('mvpclub_scout_roles_v2');
-    if (!$roles) {
-        $legacy = get_option('mvpclub_scout_roles', array());
-        $roles = array();
-        if (is_array($legacy)) {
-            foreach ($legacy as $r) {
-                $roles[] = array('id' => uniqid('r_'), 'name' => $r);
+/**
+ * ===== Attribute Management (v3) =====
+ * New unified storage for roles and characteristics using numeric ids
+ */
+function mvpclub_get_attributes_data() {
+    $data = get_option('mvpclub_attributes_v3');
+    if ($data === false) {
+        $data = array('Tor' => array(), 'Feldspieler' => array(), 'Rollen' => array());
+        $next = 1;
+        // migrate from v2 options if present
+        $chars = get_option('mvpclub_scout_characteristics_v2');
+        if (is_array($chars)) {
+            foreach (array('Tor','Feldspieler') as $type) {
+                if (empty($chars[$type]) || !is_array($chars[$type])) continue;
+                foreach ($chars[$type] as $row) {
+                    $data[$type][$next] = array('name'=>$row['main'],'parent'=>0);
+                    $parent = $next; $next++;
+                    if (!empty($row['subs'])) {
+                        foreach ($row['subs'] as $sub) {
+                            $data[$type][$next] = array('name'=>$sub['name'],'parent'=>$parent);
+                            $next++;
+                        }
+                    }
+                }
             }
-            update_option('mvpclub_scout_roles_v2', $roles);
         }
+        $roles = get_option('mvpclub_scout_roles_v2');
+        if (is_array($roles)) {
+            foreach ($roles as $r) {
+                $data['Rollen'][$next] = array('name'=>$r['name'],'parent'=>0);
+                $next++;
+            }
+        }
+        update_option('mvpclub_attributes_v3', $data);
+        update_option('mvpclub_attributes_next_id', $next);
     }
-    return is_array($roles) ? $roles : array();
+    return is_array($data) ? $data : array('Tor'=>array(),'Feldspieler'=>array(),'Rollen'=>array());
+}
+
+function mvpclub_save_attributes_data($data) {
+    update_option('mvpclub_attributes_v3', $data);
+}
+
+function mvpclub_get_next_attr_id() {
+    $next = intval(get_option('mvpclub_attributes_next_id', 1));
+    update_option('mvpclub_attributes_next_id', $next + 1);
+    return $next;
+}
+
+function mvpclub_get_roles() {
+    $data = mvpclub_get_attributes_data();
+    if (!isset($data['Rollen'])) return array();
+    $roles = array();
+    foreach ($data['Rollen'] as $id=>$row) {
+        $roles[] = array('id'=>$id,'name'=>$row['name'],'parent'=>$row['parent']);
+    }
+    return $roles;
 }
 
 function mvpclub_role_select($name, $selected = '') {
     $roles = mvpclub_get_roles();
     $html  = '<select name="'.esc_attr($name).'">';
     $html .= '<option value=""></option>';
+    // group by parent
+    $map = array();
+    foreach ($roles as $r) { $map[$r['id']] = $r; }
     foreach ($roles as $r) {
-        $sel = $selected === $r['id'] ? ' selected' : '';
+        if ($r['parent'] != 0) continue;
+        $html .= '<optgroup label="'.esc_attr($r['name']).'">';
+        $sel = $selected == $r['id'] ? ' selected' : '';
         $html .= '<option value="'.esc_attr($r['id']).'"'.$sel.'>'.esc_html($r['name']).'</option>';
+        foreach ($roles as $sub) {
+            if ($sub['parent'] == $r['id']) {
+                $sel = $selected == $sub['id'] ? ' selected' : '';
+                $html .= '<option value="'.esc_attr($sub['id']).'"'.$sel.'>'.esc_html($sub['name']).'</option>';
+            }
+        }
+        $html .= '</optgroup>';
     }
     $html .= '</select>';
     return $html;
@@ -127,7 +183,7 @@ function mvpclub_role_select($name, $selected = '') {
 
 function mvpclub_role_name($id) {
     foreach (mvpclub_get_roles() as $r) {
-        if ($r['id'] === $id) return $r['name'];
+        if ($r['id'] == $id) return $r['name'];
     }
     return '';
 }
@@ -140,29 +196,22 @@ function mvpclub_role_id_by_name($name) {
 }
 
 function mvpclub_get_characteristics() {
-    $data = get_option('mvpclub_scout_characteristics_v2');
-    if (!$data) {
-        $legacy = get_option('mvpclub_scout_characteristics', array('Tor' => array(), 'Feldspieler' => array()));
-        if (!is_array($legacy)) $legacy = array('Tor' => array(), 'Feldspieler' => array());
-        $data = array('Tor' => array(), 'Feldspieler' => array());
-        foreach (array('Tor','Feldspieler') as $t) {
-            if (!isset($legacy[$t]) || !is_array($legacy[$t])) continue;
-            foreach ($legacy[$t] as $row) {
-                $entry = array('id' => uniqid('c_'), 'main' => $row['main'], 'subs' => array());
-                if (!empty($row['subs']) && is_array($row['subs'])) {
-                    foreach ($row['subs'] as $sub) {
-                        $entry['subs'][] = array('id' => uniqid('c_'), 'name' => $sub);
-                    }
+    $data = mvpclub_get_attributes_data();
+    $out = array('Tor'=>array(),'Feldspieler'=>array());
+    foreach (array('Tor','Feldspieler') as $type) {
+        if (!isset($data[$type])) continue;
+        foreach ($data[$type] as $id=>$row) {
+            if ($row['parent'] != 0) continue;
+            $item = array('id'=>$id,'main'=>$row['name'],'subs'=>array());
+            foreach ($data[$type] as $sid=>$srow) {
+                if ($srow['parent'] == $id) {
+                    $item['subs'][] = array('id'=>$sid,'name'=>$srow['name']);
                 }
-                $data[$t][] = $entry;
             }
+            $out[$type][] = $item;
         }
-        update_option('mvpclub_scout_characteristics_v2', $data);
     }
-    foreach (array('Tor','Feldspieler') as $k) {
-        if (!isset($data[$k]) || !is_array($data[$k])) $data[$k] = array();
-    }
-    return $data;
+    return $out;
 }
 
 function mvpclub_characteristic_select($type, $name, $selected = '') {
@@ -172,11 +221,11 @@ function mvpclub_characteristic_select($type, $name, $selected = '') {
     $html .= '<option value=""></option>';
     foreach ($items as $it) {
         $html .= '<optgroup label="'.esc_attr($it['main']).'">';
-        $sel = $selected === $it['id'] ? ' selected' : '';
+        $sel = $selected == $it['id'] ? ' selected' : '';
         $html .= '<option value="'.esc_attr($it['id']).'"'.$sel.'>'.esc_html($it['main']).'</option>';
-        if (!empty($it['subs']) && is_array($it['subs'])) {
+        if (!empty($it['subs'])) {
             foreach ($it['subs'] as $sub) {
-                $sel = $selected === $sub['id'] ? ' selected' : '';
+                $sel = $selected == $sub['id'] ? ' selected' : '';
                 $html .= '<option value="'.esc_attr($sub['id']).'"'.$sel.'>'.esc_html($sub['name']).'</option>';
             }
         }
@@ -190,10 +239,10 @@ function mvpclub_characteristic_name($id) {
     $lists = mvpclub_get_characteristics();
     foreach ($lists as $items) {
         foreach ($items as $it) {
-            if ($it['id'] === $id) return $it['main'];
+            if ($it['id'] == $id) return $it['main'];
             if (!empty($it['subs'])) {
                 foreach ($it['subs'] as $sub) {
-                    if ($sub['id'] === $id) return $sub['name'];
+                    if ($sub['id'] == $id) return $sub['name'];
                 }
             }
         }
@@ -434,7 +483,8 @@ add_action('add_meta_boxes', function() {
 add_action('admin_enqueue_scripts', 'mvpclub_player_admin_scripts');
 function mvpclub_player_admin_scripts($hook) {
     $screen = get_current_screen();
-    if ($screen->post_type !== 'mvpclub-spieler') return;
+    $allowed = array('mvpclub_page_mvpclub-scout-settings');
+    if ($screen->post_type !== 'mvpclub-spieler' && !in_array($hook, $allowed, true)) return;
 
     remove_action('admin_print_scripts', 'print_emoji_detection_script');
     remove_action('admin_print_styles', 'print_emoji_styles');
@@ -911,121 +961,75 @@ function mvpclub_render_scout_settings_page() {
 }
 
 function mvpclub_render_characteristics_page() {
-    if (isset($_POST['tor_chars']) && check_admin_referer('mvpclub_characteristics','mvpclub_char_nonce')) {
-        $tor   = mvpclub_parse_characteristics(wp_unslash($_POST['tor_chars']));
-        $feld  = mvpclub_parse_characteristics(wp_unslash($_POST['feld_chars']));
-        $roles = array_filter(array_map('trim', explode("\n", wp_unslash($_POST['roles'] ?? ''))));
-
-        $current_chars = mvpclub_get_characteristics();
-        $new_chars = mvpclub_merge_characteristics($current_chars, array('Tor'=>$tor,'Feldspieler'=>$feld));
-        update_option('mvpclub_scout_characteristics_v2', $new_chars);
-
-        $current_roles = mvpclub_get_roles();
-        $new_roles = mvpclub_merge_roles($current_roles, $roles);
-        update_option('mvpclub_scout_roles_v2', $new_roles);
+    if (isset($_POST['attr_name']) && check_admin_referer('mvpclub_characteristics','mvpclub_char_nonce')) {
+        $current = mvpclub_get_attributes_data();
+        $new = $current;
+        foreach (array('Tor','Feldspieler','Rollen') as $grp) {
+            if (!isset($new[$grp])) $new[$grp] = array();
+            if (!empty($_POST['attr_name'][$grp])) {
+                foreach ($_POST['attr_name'][$grp] as $id=>$name) {
+                    $name = sanitize_text_field($name);
+                    $parent = intval($_POST['attr_parent'][$grp][$id] ?? 0);
+                    if (isset($_POST['attr_delete'][$grp][$id])) {
+                        unset($new[$grp][$id]);
+                        continue;
+                    }
+                    if ($id == 0) { $id = mvpclub_get_next_attr_id(); }
+                    $new[$grp][$id] = array('name'=>$name,'parent'=>$parent);
+                }
+            }
+        }
+        mvpclub_save_attributes_data($new);
         echo '<div class="updated"><p>Einstellungen gespeichert.</p></div>';
     }
     mvpclub_characteristics_section(true);
 }
 
 function mvpclub_characteristics_section($wrap = false) {
-    $data      = mvpclub_get_characteristics();
-    $tor_text  = mvpclub_characteristics_to_text($data['Tor']);
-    $feld_text = mvpclub_characteristics_to_text($data['Feldspieler']);
-    $roles_map = mvpclub_get_roles();
-    $roles     = array_map(function($r){ return $r['name']; }, $roles_map);
-    $roles_text = implode("\n", $roles);
-
+    $data = mvpclub_get_attributes_data();
     if ($wrap) echo '<div class="wrap"><h1>Scouting</h1>';
     ?>
     <form method="post">
         <?php wp_nonce_field('mvpclub_characteristics','mvpclub_char_nonce'); ?>
-        <table class="form-table">
-            <tr>
-                <th scope="row"><label for="tor_chars">Tor</label></th>
-                <td><textarea name="tor_chars" id="tor_chars" rows="10" class="large-text code"><?php echo esc_textarea($tor_text); ?></textarea><p class="description">Format: Haupt &gt; Unter1, Unter2</p></td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="feld_chars">Feldspieler</label></th>
-                <td><textarea name="feld_chars" id="feld_chars" rows="10" class="large-text code"><?php echo esc_textarea($feld_text); ?></textarea></td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="roles">Rollen</label></th>
-                <td><textarea name="roles" id="roles" rows="5" class="large-text code"><?php echo esc_textarea($roles_text); ?></textarea><p class="description">Eine Rolle pro Zeile</p></td>
-            </tr>
-        </table>
+        <?php foreach (array('Tor','Feldspieler','Rollen') as $grp): ?>
+            <h2><?php echo esc_html($grp); ?></h2>
+            <?php $next = max(array_keys($data[$grp] ?: array(0))) + 1; ?>
+            <table class="widefat" id="attr-table-<?php echo esc_attr($grp); ?>">
+                <thead><tr><th>ID</th><th>Name</th><th>Parent</th><th></th></tr></thead>
+                <tbody data-next="<?php echo $next; ?>">
+                <?php foreach ($data[$grp] as $id=>$row): ?>
+                    <tr>
+                        <td><?php echo $id; ?></td>
+                        <td><input type="text" name="attr_name[<?php echo esc_attr($grp); ?>][<?php echo $id; ?>]" value="<?php echo esc_attr($row['name']); ?>" class="regular-text" /></td>
+                        <td>
+                            <select name="attr_parent[<?php echo esc_attr($grp); ?>][<?php echo $id; ?>]">
+                                <option value="0">-</option>
+                                <?php foreach ($data[$grp] as $pid=>$prow) if($prow['parent']==0 && $pid!=$id): ?>
+                                    <option value="<?php echo $pid; ?>" <?php selected($row['parent'],$pid); ?>><?php echo esc_html($prow['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </td>
+                        <td><button class="button mvpclub-delete-attr">X</button><input type="hidden" name="attr_delete[<?php echo esc_attr($grp); ?>][<?php echo $id; ?>]" value="" class="attr-delete" /></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+            <p><button class="button mvpclub-add-attr" data-group="<?php echo esc_attr($grp); ?>">Hinzufügen</button></p>
+        <?php endforeach; ?>
         <?php submit_button('Speichern'); ?>
     </form>
+    <script type="text/template" id="attr-row-template">
+        <tr>
+            <td class="attr-id"></td>
+            <td><input type="text" class="regular-text attr-name" /></td>
+            <td><select class="attr-parent"><option value="0">-</option></select></td>
+            <td><button class="button mvpclub-delete-attr">X</button><input type="hidden" class="attr-delete" /></td>
+        </tr>
+    </script>
     <?php
     if ($wrap) echo '</div>';
 }
 
-function mvpclub_parse_characteristics($text) {
-    $lines = array_filter(array_map('trim', explode("\n", $text)));
-    $out = array();
-    foreach ($lines as $line) {
-        list($main, $subs) = array_pad(array_map('trim', explode('>', $line, 2)), 2, '');
-        $sub_arr = $subs ? array_filter(array_map('trim', explode(',', $subs))) : array();
-        if ($main !== '') {
-            $out[] = array('main' => $main, 'subs' => $sub_arr);
-        }
-    }
-    return $out;
-}
-
-function mvpclub_characteristics_to_text($list) {
-    $lines = array();
-    foreach ($list as $row) {
-        $line = $row['main'];
-        if (!empty($row['subs'])) {
-            $names = array();
-            foreach ($row['subs'] as $s) { $names[] = $s['name']; }
-            $line .= ' > ' . implode(', ', $names);
-        }
-        $lines[] = $line;
-    }
-    return implode("\n", $lines);
-}
-
-function mvpclub_merge_roles($current, $names) {
-    $out = array();
-    foreach ($names as $n) {
-        $found = false;
-        foreach ($current as $r) {
-            if ($r['name'] === $n) { $out[] = $r; $found = true; break; }
-        }
-        if (!$found) $out[] = array('id' => uniqid('r_'), 'name' => $n);
-    }
-    return $out;
-}
-
-function mvpclub_merge_characteristics($current, $parsed) {
-    $result = array('Tor'=>array(),'Feldspieler'=>array());
-    foreach (array('Tor','Feldspieler') as $type) {
-        $currMain = array();
-        foreach ($current[$type] as $row) { $currMain[$row['main']] = $row; }
-        foreach ($parsed[$type] as $row) {
-            $mainName = $row['main'];
-            $subs = array();
-            if (isset($currMain[$mainName])) {
-                $mainId = $currMain[$mainName]['id'];
-                $currSubs = array();
-                foreach ($currMain[$mainName]['subs'] as $s) { $currSubs[$s['name']] = $s; }
-                foreach ($row['subs'] as $sn) {
-                    if (isset($currSubs[$sn])) { $subs[] = $currSubs[$sn]; }
-                    else $subs[] = array('id'=>uniqid('c_'), 'name'=>$sn);
-                }
-            } else {
-                $mainId = uniqid('c_');
-                foreach ($row['subs'] as $sn) {
-                    $subs[] = array('id'=>uniqid('c_'), 'name'=>$sn);
-                }
-            }
-            $result[$type][] = array('id'=>$mainId,'main'=>$mainName,'subs'=>$subs);
-        }
-    }
-    return $result;
-}
 
 /**
  * Register dynamic Gutenberg block for player info
