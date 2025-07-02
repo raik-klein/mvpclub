@@ -94,4 +94,9 @@ jQuery(function($){
 
     $(document).on('change', '#birthplace_country', updateBirthplaceSelect);
     updateBirthplaceSelect();
+
+    $(document).on('input', '#height', function(){
+        $(this).next('output').text(this.value + ' cm');
+    });
+    $('#height').trigger('input');
 });
