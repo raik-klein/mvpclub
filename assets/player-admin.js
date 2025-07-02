@@ -32,9 +32,19 @@ jQuery(function($){
     });
 
     var radarChart;
+    function adjustRadarSize(){
+        var settings = $('.mvpclub-radar-settings');
+        var canvas = $('#mvpclub-radar-preview');
+        if(settings.length && canvas.length){
+            var h = settings.outerHeight();
+            canvas.attr('width', h).attr('height', h);
+        }
+    }
+
     function renderRadar(){
         var canvas = document.getElementById('mvpclub-radar-preview');
         if(!canvas || typeof Chart === 'undefined') return;
+        adjustRadarSize();
         var labels = [], data = [];
         for(var i=0;i<6;i++){
             labels.push($('[name="radar_chart_label'+i+'"]').val());
@@ -57,6 +67,7 @@ jQuery(function($){
     }
 
     $(document).on('input', '[name^="radar_chart_label"], [name^="radar_chart_value"]', renderRadar);
+    adjustRadarSize();
     renderRadar();
 
     $(document).on('click', '#mvpclub-player-tabs .nav-tab', function(e){
@@ -66,5 +77,6 @@ jQuery(function($){
         $(this).addClass('nav-tab-active');
         $('#mvpclub-player-tabs .mvpclub-tab-content').removeClass('active').hide();
         $('#tab-'+tab).addClass('active').show();
+        if(tab === 'radar'){ adjustRadarSize(); renderRadar(); }
     });
 });

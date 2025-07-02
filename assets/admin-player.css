@@ -1,3 +1,9 @@
 #mvpclub-player-tabs .mvpclub-tab-content{display:none;}
 #mvpclub-player-tabs .mvpclub-tab-content.active{display:block;}
 .mvpclub-main-position{font-weight:bold;background:#f0f8ff;}
+#tab-statistik{overflow-x:auto;}
+#tab-statistik table{width:100%;table-layout:fixed;}
+#tab-statistik input,#tab-statistik select{width:100%;box-sizing:border-box;}
+#tab-radar .mvpclub-radar-flex{display:flex;justify-content:space-between;align-items:flex-start;}
+#tab-radar .mvpclub-radar-settings{flex:1;margin-right:10px;}
+#mvpclub-radar-preview{display:block;margin-left:auto;}

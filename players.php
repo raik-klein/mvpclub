@@ -151,10 +151,28 @@ function mvpclub_player_placeholders($player_id) {
 
     $statistik_html = mvpclub_generate_statistik_table($data['performance_data']);
 
+    $age_text = '';
+    if (!empty($data['birthdate'])) {
+        $d = DateTime::createFromFormat('d.m.Y', $data['birthdate']);
+        if ($d) {
+            $age_text = (new DateTime())->diff($d)->y . ' Jahre';
+        }
+    }
+
+    $img_url = '';
+    if ($custom_image_id) {
+        $src = wp_get_attachment_image_src($custom_image_id, 'medium');
+        if ($src) $img_url = $src[0];
+    } else {
+        $src = wp_get_attachment_image_src(get_post_thumbnail_id($player_id), 'medium');
+        if ($src) $img_url = $src[0];
+    }
+
     $placeholders = array(
         '[spielername]'     => $title,
         '[geburtsdatum]'    => isset($data['birthdate']) ? $data['birthdate'] : '',
         '[geburtsort]'      => isset($data['birthplace']) ? $data['birthplace'] : '',
+        '[alter]'           => $age_text,
         '[groesse]'         => isset($data['height']) ? $data['height'] : '',
         '[nationalitaet]'   => isset($data['nationality']) ? $data['nationality'] : '',
         '[position]'        => isset($data['position']) ? $data['position'] : '',
@@ -164,12 +182,13 @@ function mvpclub_player_placeholders($player_id) {
         '[marktwert]'       => isset($data['market_value']) ? $data['market_value'] : '',
         '[bewertung]'       => isset($data['rating']) ? $data['rating'] : '',
         '[bild]'            => $img,
+        '[bild-url]'        => $img_url,
         '[statistik]'       => $statistik_html,
         '[radar]'           => $chart_html,
     );
 
     foreach ($placeholders as $tag => $val) {
-        if ($tag !== '[bild]' && $tag !== '[radar]' && $tag !== '[statistik]') {
+        if ($tag !== '[bild]' && $tag !== '[bild-url]' && $tag !== '[radar]' && $tag !== '[statistik]') {
             $placeholders[$tag] = esc_html($val);
         }
     }
@@ -290,7 +309,7 @@ function mvpclub_player_meta_box($post) {
 
     // Information Tab
     echo '<div id="tab-info" class="mvpclub-tab-content active"><table class="form-table">';
-    $info_keys = array('birthdate','nationality','birthplace','position','detail_position','height','foot','club','market_value','image');
+    $info_keys = array('image','birthdate','nationality','birthplace','position','detail_position','height','foot','club','market_value');
 
     $age_text = '';
     if (!empty($values['birthdate'])) {
@@ -331,6 +350,24 @@ function mvpclub_player_meta_box($post) {
                 echo '<option value="' . esc_attr($op) . '"' . $sel . '>' . esc_html($op) . '</option>';
             }
             echo '</select></td></tr>';
+        } elseif ($key === 'birthplace') {
+            $country = '';
+            $city = $value;
+            if (preg_match('/^(\X+)\s+(.*)$/u', $value, $m)) {
+                $country = $m[1];
+                $city = $m[2];
+            }
+            $countries = mvpclub_get_country_map();
+            echo '<tr><th><label for="birthplace_city">' . esc_html($label) . '</label></th><td>';
+            echo '<select name="birthplace_country">';
+            echo '<option value=""></option>';
+            foreach ($countries as $c) {
+                $sel = $country === $c['emoji'] ? ' selected' : '';
+                echo '<option value="' . esc_attr($c['emoji']) . '"' . $sel . '>' . esc_html($c['emoji'] . ' ' . $c['name']) . '</option>';
+            }
+            echo '</select> ';
+            echo '<input type="text" name="birthplace_city" id="birthplace_city" value="' . esc_attr($city) . '" class="regular-text" />';
+            echo '</td></tr>';
         } elseif ($key === 'position') {
             $options = array('Tor','Abwehr','Mittelfeld','Sturm');
             echo '<tr><th><label for="position">' . esc_html($label) . '</label></th><td>';
@@ -364,7 +401,16 @@ function mvpclub_player_meta_box($post) {
     // Rating Tab
     echo '<div id="tab-rating" class="mvpclub-tab-content"><table class="form-table">';
     $rating = isset($values['rating']) && $values['rating'] !== '' ? $values['rating'] : '3.0';
-    echo '<tr><th><label for="rating">' . esc_html($fields['rating']) . '</label></th><td><input type="range" name="rating" id="rating" min="1" max="5" step="0.5" value="' . esc_attr($rating) . '" oninput="this.nextElementSibling.value=this.value" /> <output>' . esc_html($rating) . '</output></td></tr>';
+    echo '<tr><th><label for="rating">' . esc_html($fields['rating']) . '</label></th><td><input type="range" name="rating" id="rating" min="1" max="5" step="0.5" value="' . esc_attr($rating) . '" oninput="this.nextElementSibling.value=this.value" /> <output>' . esc_html($rating) . '</output><br />';
+    echo '<pre class="mvpclub-rating-info" style="margin-top:4px;white-space:pre-wrap;">5.0 (S): Weltklassespieler
+4.5 (A+): CL-Schlüsselspieler
+4.0 (A): CL-Kaderspieler
+3.5 (B+): Top-5-Schlüsselspieler
+3.0 (B): Top-5-Kaderspieler
+2.5 (C+): Top-9-Schlüsselspieler
+2.0 (C): Top-9-Kaderspieler
+1.5 (D+): RDW-Schlüsselspieler
+1.0 (D): RDW-Kaderspieler</pre></td></tr>';
     echo '</table></div>';
 
     // Performance Tab
@@ -386,7 +432,7 @@ function mvpclub_player_meta_box($post) {
     echo '<p><button type="button" class="button" id="add-statistik-row">Zeile hinzufügen</button></p></div>';
 
     // Radar Tab
-    echo '<div id="tab-radar" class="mvpclub-tab-content"><table class="form-table">';
+    echo '<div id="tab-radar" class="mvpclub-tab-content"><div class="mvpclub-radar-flex"><table class="form-table mvpclub-radar-settings">';
     $chart = json_decode($values['radar_chart'], true);
     $labels = isset($chart['labels']) ? (array) $chart['labels'] : array_fill(0, 6, '');
     $values_radar = isset($chart['values']) ? (array) $chart['values'] : array_fill(0, 6, 0);
@@ -397,8 +443,7 @@ function mvpclub_player_meta_box($post) {
         echo '<td><input type="range" name="radar_chart_value' . $i . '" min="0" max="100" value="' . esc_attr($v) . '" oninput="this.nextElementSibling.value=this.value" />';
         echo '<output>' . esc_html($v) . '</output></td></tr>';
     }
-    echo '<tr><td colspan="2"><canvas id="mvpclub-radar-preview" width="300" height="300"></canvas></td></tr>';
-    echo '</table></div>';
+    echo '</table><canvas id="mvpclub-radar-preview" width="200" height="200"></canvas></div></div>';
 
     echo '</div>'; // end tabs
 }
@@ -428,6 +473,15 @@ add_action('save_post_mvpclub-spieler', function($post_id) {
             } else {
                 delete_post_meta($post_id, 'image');
             }
+        } elseif ($key === 'birthplace') {
+            $country = isset($_POST['birthplace_country']) ? wp_unslash($_POST['birthplace_country']) : '';
+            $city = isset($_POST['birthplace_city']) ? sanitize_text_field($_POST['birthplace_city']) : '';
+            $val = trim($country . ' ' . $city);
+            if ($val !== '') {
+                update_post_meta($post_id, 'birthplace', $val);
+            } else {
+                delete_post_meta($post_id, 'birthplace');
+            }
         } elseif ($key === 'detail_position') {
             if (isset($_POST['detail_position']) && is_array($_POST['detail_position'])) {
                 $val = implode(',', array_map('sanitize_text_field', $_POST['detail_position']));
@@ -449,7 +503,7 @@ add_action('save_post_mvpclub-spieler', function($post_id) {
                 for ($i = 0; $i < $count; $i++) {
                     $row = array(
                         'Saison'     => sanitize_text_field($_POST['perf_saison'][$i]),
-                        'Wettbewerb' => sanitize_text_field($_POST['perf_competition'][$i]),
+                        'Wettbewerb' => sanitize_text_field(html_entity_decode($_POST['perf_competition'][$i], ENT_QUOTES, 'UTF-8')),
                         'Spiele'     => intval($_POST['perf_games'][$i]),
                         'Tore'       => intval($_POST['perf_goals'][$i]),
                         'Assists'    => intval($_POST['perf_assists'][$i]),
