@@ -257,6 +257,26 @@ function mvpclub_player_placeholders($player_id) {
         if ($src) $img_url = $src[0];
     }
 
+    $strengths_html = '';
+    $strengths = json_decode($data['strengths'], true);
+    if (is_array($strengths) && !empty($strengths)) {
+        $strengths_html = '<ul class="procon">';
+        foreach ($strengths as $it) {
+            $strengths_html .= '<li>' . esc_html($it) . '</li>';
+        }
+        $strengths_html .= '</ul>';
+    }
+
+    $weaknesses_html = '';
+    $weaknesses = json_decode($data['weaknesses'], true);
+    if (is_array($weaknesses) && !empty($weaknesses)) {
+        $weaknesses_html = '<ul class="procon">';
+        foreach ($weaknesses as $it) {
+            $weaknesses_html .= '<li>' . esc_html($it) . '</li>';
+        }
+        $weaknesses_html .= '</ul>';
+    }
+
     $placeholders = array(
         '[spielername]'     => $title,
         '[geburtsdatum]'    => isset($data['birthdate']) ? $data['birthdate'] : '',
@@ -272,6 +292,8 @@ function mvpclub_player_placeholders($player_id) {
         '[bewertung]'       => isset($data['rating']) ? $data['rating'] : '',
         '[spielstil]'       => isset($data['spielstil']) ? $data['spielstil'] : '',
         '[rolle]'           => isset($data['rolle']) ? $data['rolle'] : '',
+        '[staerken]'        => $strengths_html,
+        '[schwaechen]'      => $weaknesses_html,
         '[bild]'            => $img,
         '[bild-url]'        => $img_url,
         '[statistik]'       => $statistik_html,
@@ -279,7 +301,7 @@ function mvpclub_player_placeholders($player_id) {
     );
 
     foreach ($placeholders as $tag => $val) {
-        if ($tag !== '[bild]' && $tag !== '[bild-url]' && $tag !== '[radar]' && $tag !== '[statistik]') {
+        if ($tag !== '[bild]' && $tag !== '[bild-url]' && $tag !== '[radar]' && $tag !== '[statistik]' && $tag !== '[staerken]' && $tag !== '[schwaechen]') {
             $placeholders[$tag] = esc_html($val);
         }
     }
