@@ -35,7 +35,7 @@ jQuery(function($){
     function adjustRadarSize(){
         var canvas = $('#mvpclub-radar-preview');
         if(canvas.length){
-            var size = 400;
+            var size = 250;
             canvas.attr('width', size).attr('height', size);
         }
     }
