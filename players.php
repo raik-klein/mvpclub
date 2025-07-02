@@ -143,6 +143,22 @@ function mvpclub_player_admin_scripts($hook) {
         filemtime(plugin_dir_path(__FILE__) . 'assets/player-image.js'),
         true
     );
+
+    wp_enqueue_script(
+        'chartjs',
+        plugins_url('assets/chart.js', __FILE__),
+        array(),
+        filemtime(plugin_dir_path(__FILE__) . 'assets/chart.js'),
+        true
+    );
+
+    wp_enqueue_script(
+        'mvpclub-radar-editor',
+        plugins_url('assets/radar-editor.js', __FILE__),
+        array('jquery', 'chartjs'),
+        filemtime(plugin_dir_path(__FILE__) . 'assets/radar-editor.js'),
+        true
+    );
 }
 
 function mvpclub_player_meta_box($post) {
@@ -151,10 +167,11 @@ function mvpclub_player_meta_box($post) {
     foreach (mvpclub_player_fields() as $key => $label) {
         $value = get_post_meta($post->ID, $key, true);
         if ($key === 'radar_chart') {
-            $chart = json_decode($value, true);
+            $chart  = json_decode($value, true);
             $labels = isset($chart['labels']) ? (array) $chart['labels'] : array_fill(0, 6, '');
             $values = isset($chart['values']) ? (array) $chart['values'] : array_fill(0, 6, 0);
             echo '<tr><th colspan="2">' . esc_html($label) . '</th></tr>';
+            echo '<tr><td colspan="2"><canvas id="mvpclub-radar-preview" width="300" height="300"></canvas></td></tr>';
             for ($i = 0; $i < 6; $i++) {
                 $l = isset($labels[$i]) ? $labels[$i] : '';
                 $v = isset($values[$i]) ? $values[$i] : 0;
