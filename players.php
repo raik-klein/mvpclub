@@ -426,7 +426,7 @@ function mvpclub_player_placeholders($player_id) {
         '[fuss]'            => isset($data['foot']) ? $data['foot'] : '',
         '[verein]'          => isset($data['club']) ? $data['club'] : '',
         '[marktwert]'       => isset($data['market_value']) ? $data['market_value'] : '',
-        '[bewertung]'       => isset($data['rating']) ? $data['rating'] : '',
+        '[bewertung]'       => isset($data['rating']) && $data['rating'] !== '' ? number_format((float)$data['rating'], 1) : '',
         '[spielstil]'       => isset($data['spielstil']) ? $data['spielstil'] : '',
         '[rolle]'           => isset($data['rolle']) ? mvpclub_role_name($data['rolle']) : '',
         '[staerken]'        => $strengths_html,
@@ -670,6 +670,9 @@ function mvpclub_player_meta_box($post) {
     // Scouting Tab
     echo '<div id="tab-scouting" class="mvpclub-tab-content"><table class="form-table">';
     $rating = isset($values['rating']) && $values['rating'] !== '' ? $values['rating'] : '3.0';
+    if (is_numeric($rating)) {
+        $rating = number_format((float)$rating, 1);
+    }
     echo '<tr><th><label for="rating">' . esc_html($fields['rating']) . '</label></th><td><input type="range" name="rating" id="rating" min="1" max="5" step="0.5" value="' . esc_attr($rating) . '" oninput="this.nextElementSibling.value=this.value" /> <output>' . esc_html($rating) . '</output><br />';
     echo '<pre class="mvpclub-rating-info" style="margin-top:4px;white-space:pre-wrap;">5.0 (S): Weltklassespieler
 4.5 (A+): CL-Schlüsselspieler
@@ -699,6 +702,7 @@ function mvpclub_player_meta_box($post) {
             $s = mvpclub_characteristic_id_by_name($s);
         }
     }
+    unset($s);
     $weaknesses = json_decode($values['weaknesses'], true);
     if (!is_array($weaknesses)) { $weaknesses = array(); }
     foreach ($weaknesses as &$w) {
@@ -706,6 +710,7 @@ function mvpclub_player_meta_box($post) {
             $w = mvpclub_characteristic_id_by_name($w);
         }
     }
+    unset($w);
 
     echo '<tr><th><label>Stärken</label></th><td>';
     echo '<ul id="mvpclub-strengths-list" class="mvpclub-characteristic-list">';
@@ -823,6 +828,7 @@ add_action('save_post_mvpclub-spieler', function($post_id) {
         } elseif ($key === 'rating') {
             $rating = isset($_POST['rating']) ? floatval($_POST['rating']) : '';
             if ($rating !== '') {
+                $rating = number_format($rating, 1);
                 update_post_meta($post_id, 'rating', $rating);
             } else {
                 delete_post_meta($post_id, 'rating');
