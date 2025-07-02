@@ -58,13 +58,43 @@ add_action('add_meta_boxes', function() {
     add_meta_box('mvpclub_player_details', 'Spielerdaten', 'mvpclub_player_meta_box', 'mvpclub_player');
 });
 
+add_action('admin_enqueue_scripts', function($hook) {
+    if (in_array($hook, array('post.php', 'post-new.php'))) {
+        $screen = get_current_screen();
+        if ($screen && $screen->post_type === 'mvpclub_player') {
+            wp_enqueue_script('jquery-ui-datepicker');
+            wp_enqueue_style('jquery-ui-style', 'https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css');
+            wp_enqueue_script(
+                'mvpclub-date-fallback',
+                plugins_url('js/date-fallback.js', __FILE__),
+                array('jquery', 'jquery-ui-datepicker'),
+                filemtime(plugin_dir_path(__FILE__) . 'js/date-fallback.js'),
+                true
+            );
+        }
+    }
+});
+
 function mvpclub_player_meta_box($post) {
     wp_nonce_field('mvpclub_save_player', 'mvpclub_player_nonce');
     echo '<table class="form-table">';
     foreach (mvpclub_player_fields() as $key => $label) {
         $value = get_post_meta($post->ID, $key, true);
         echo '<tr><th><label for="' . esc_attr($key) . '">' . esc_html($label) . '</label></th>';
-        echo '<td><input type="text" name="' . esc_attr($key) . '" id="' . esc_attr($key) . '" value="' . esc_attr($value) . '" class="regular-text" /></td></tr>';
+        if ($key === 'birthdate') {
+            $date_input  = '';
+            $date_text   = '';
+            if (!empty($value)) {
+                $dt = DateTime::createFromFormat('d.m.Y', $value);
+                if ($dt) {
+                    $date_input = $dt->format('Y-m-d');
+                    $date_text  = $dt->format('d.m.Y');
+                }
+            }
+            echo '<td><input type="date" name="' . esc_attr($key) . '" id="' . esc_attr($key) . '" value="' . esc_attr($date_input) . '" data-date-text="' . esc_attr($date_text) . '" class="regular-text mvpclub-date-field" /></td></tr>';
+        } else {
+            echo '<td><input type="text" name="' . esc_attr($key) . '" id="' . esc_attr($key) . '" value="' . esc_attr($value) . '" class="regular-text" /></td></tr>';
+        }
     }
     echo '</table>';
 }
@@ -79,7 +109,18 @@ add_action('save_post_mvpclub_player', function($post_id) {
 
     foreach (mvpclub_player_fields() as $key => $label) {
         if (isset($_POST[$key])) {
-            update_post_meta($post_id, $key, sanitize_text_field($_POST[$key]));
+            $value = wp_unslash($_POST[$key]);
+            if ($key === 'birthdate') {
+                $dt = DateTime::createFromFormat('Y-m-d', $value);
+                if (!$dt) {
+                    $dt = DateTime::createFromFormat('d.m.Y', $value);
+                }
+                if ($dt) {
+                    update_post_meta($post_id, $key, $dt->format('d.m.Y'));
+                }
+            } else {
+                update_post_meta($post_id, $key, sanitize_text_field($value));
+            }
         }
     }
 });
