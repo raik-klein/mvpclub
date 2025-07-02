@@ -372,6 +372,7 @@ function mvpclub_render_scout_settings_page() {
         '[fuss]'          => 'rechts',
         '[berater]'       => 'Musterberater',
         '[verein]'        => 'FC Beispiel',
+        '[radar_chart]'   => 'Radar-Beispiel',
     );
 
     $preview_html = str_replace(array_keys($placeholders), array_values($placeholders), $template);
@@ -487,6 +488,7 @@ function mvpclub_render_player_info($attributes) {
         '[fuss]'          => isset($data['foot']) ? $data['foot'] : '',
         '[berater]'       => isset($data['agent']) ? $data['agent'] : '',
         '[verein]'        => isset($data['club']) ? $data['club'] : '',
+        '[radar_chart]'   => 'Radar-Beispiel',
         '[bild]'          => $img,
         '[radar_chart]'   => $chart_html,
     );
