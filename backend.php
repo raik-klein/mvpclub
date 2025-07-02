@@ -13,22 +13,14 @@ add_action('admin_menu', function () {
         3
     );
 
+    // Kombinierter Menüpunkt für Blöcke und Shortcodes
     add_submenu_page(
         'mvpclub-main',
-        'Scouting-Block',
-        'Scouting-Block',
+        'Elemente',
+        'Elemente',
         'edit_posts',
-        'mvpclub-block-scouting',
-        'mvpclub_render_block_page'
-    );
-
-    add_submenu_page(
-        'mvpclub-main',
-        'Shortcodes',
-        'Shortcodes',
-        'edit_posts',
-        'mvpclub-shortcodes',
-        'mvpclub_render_shortcodes_page'
+        'mvpclub-elements',
+        'mvpclub_render_elements_page'
     );
 });
 
@@ -74,6 +66,12 @@ function mvpclub_render_shortcodes_page() {
             </tbody>
         </table>
     </div>';
+}
+
+// Neue kombinierte Seite für Blöcke und Shortcodes
+function mvpclub_render_elements_page() {
+    mvpclub_render_block_page();
+    mvpclub_render_shortcodes_page();
 }
 
 /**
