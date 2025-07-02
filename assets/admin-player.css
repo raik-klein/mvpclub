@@ -4,13 +4,15 @@
 #tab-statistik{overflow-x:auto;}
 #tab-statistik table{width:100%;table-layout:fixed;}
 #tab-statistik input,#tab-statistik select{width:100%;box-sizing:border-box;}
-#tab-radar .mvpclub-radar-flex{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;}
-#tab-radar .mvpclub-radar-settings{flex:1;}
+#tab-radar .mvpclub-radar-flex{display:flex;flex-direction:column;align-items:flex-start;gap:20px;}
+#tab-radar .mvpclub-radar-settings{width:400px;}
 #tab-radar .mvpclub-radar-settings tr{display:flex;align-items:center;gap:8px;}
 #tab-radar .mvpclub-radar-settings td:first-child{flex:1;}
 #tab-radar .mvpclub-radar-settings input[type="text"]{width:100%;}
 #tab-radar .mvpclub-radar-settings input[type="range"]{flex:1;}
 #tab-radar .mvpclub-radar-settings output{width:3em;text-align:right;display:block;}
-#mvpclub-radar-preview{display:block;max-width:250px;margin-left:auto;align-self:flex-start;}
+#mvpclub-radar-preview{display:block;width:400px;max-width:100%;margin:0 0 20px 0;}
 #birthplace_country.mvpclub-emoji-select{width:4em;}
 #birthplace_city{width:21em;}
+.mvpclub-birthdate-wrap{display:flex;align-items:center;width:25em;gap:0.5em;}
+.mvpclub-birthdate-wrap input{width:8em;}

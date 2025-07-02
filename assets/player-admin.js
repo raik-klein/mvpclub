@@ -33,11 +33,9 @@ jQuery(function($){
 
     var radarChart;
     function adjustRadarSize(){
-        var settings = $('.mvpclub-radar-settings');
         var canvas = $('#mvpclub-radar-preview');
-        if(settings.length && canvas.length){
-            var h = settings.outerHeight();
-            var size = Math.min(250, h);
+        if(canvas.length){
+            var size = 400;
             canvas.attr('width', size).attr('height', size);
         }
     }

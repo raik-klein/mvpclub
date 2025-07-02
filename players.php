@@ -296,7 +296,6 @@ function mvpclub_player_meta_box($post) {
             $age_text = (new DateTime())->diff($d)->y . ' Jahre';
         }
     }
-    echo '<tr><th>Alter</th><td>' . esc_html($age_text) . '</td></tr>';
     foreach ($info_keys as $key) {
         $label = $fields[$key];
         $value = isset($values[$key]) ? $values[$key] : '';
@@ -328,10 +327,16 @@ function mvpclub_player_meta_box($post) {
                 echo '<option value="' . esc_attr($op) . '"' . $sel . '>' . esc_html($op) . '</option>';
             }
             echo '</select></td></tr>';
+        } elseif ($key === 'birthdate') {
+            echo '<tr><th><label for="birthdate">' . esc_html($label) . '</label></th><td>';
+            echo '<div class="mvpclub-birthdate-wrap">';
+            echo '<input type="text" name="birthdate" id="birthdate" value="' . esc_attr($value) . '" class="regular-text" style="width:8em;margin-right:0.5em;" />';
+            echo '<span class="mvpclub-age">' . esc_html($age_text) . '</span>';
+            echo '</div></td></tr>';
         } elseif ($key === 'nationality') {
             $countries = mvpclub_get_country_map();
             echo '<tr><th><label for="nationality">' . esc_html($label) . '</label></th><td>';
-            echo '<select name="nationality" id="nationality">';
+            echo '<select name="nationality" id="nationality" class="regular-text">';
             echo '<option value=""></option>';
             foreach ($countries as $c) {
                 $val = $c['emoji'] . ' ' . $c['name'];
@@ -432,7 +437,7 @@ function mvpclub_player_meta_box($post) {
     echo '<p><button type="button" class="button" id="add-statistik-row">Zeile hinzufügen</button></p></div>';
 
     // Radar Tab
-    echo '<div id="tab-radar" class="mvpclub-tab-content"><div class="mvpclub-radar-flex"><table class="form-table mvpclub-radar-settings">';
+    echo '<div id="tab-radar" class="mvpclub-tab-content"><div class="mvpclub-radar-flex"><canvas id="mvpclub-radar-preview" width="400" height="400"></canvas><table class="form-table mvpclub-radar-settings">';
     $chart = json_decode($values['radar_chart'], true);
     $labels = isset($chart['labels']) ? (array) $chart['labels'] : array_fill(0, 6, '');
     $values_radar = isset($chart['values']) ? (array) $chart['values'] : array_fill(0, 6, 0);
@@ -443,7 +448,7 @@ function mvpclub_player_meta_box($post) {
         echo '<td><input type="range" name="radar_chart_value' . $i . '" min="0" max="100" value="' . esc_attr($v) . '" oninput="this.nextElementSibling.value=this.value" />';
         echo '<output>' . esc_html($v) . '</output></td></tr>';
     }
-    echo '</table><canvas id="mvpclub-radar-preview" width="200" height="200"></canvas></div></div>';
+    echo '</table></div></div>';
 
     echo '</div>'; // end tabs
 }
@@ -503,7 +508,7 @@ add_action('save_post_mvpclub-spieler', function($post_id) {
                 for ($i = 0; $i < $count; $i++) {
                     $row = array(
                         'Saison'     => sanitize_text_field($_POST['perf_saison'][$i]),
-                        'Wettbewerb' => sanitize_text_field(html_entity_decode($_POST['perf_competition'][$i], ENT_QUOTES, 'UTF-8')),
+                        'Wettbewerb' => sanitize_text_field(wp_unslash($_POST['perf_competition'][$i])),
                         'Spiele'     => intval($_POST['perf_games'][$i]),
                         'Tore'       => intval($_POST['perf_goals'][$i]),
                         'Assists'    => intval($_POST['perf_assists'][$i]),
