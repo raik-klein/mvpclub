@@ -340,7 +340,13 @@ function mvpclub_render_player_info($attributes) {
         if (!empty($chart['labels']) && !empty($chart['values'])) {
             $chart_id = 'radar-chart-' . $player_id;
             $chart_html = '<canvas id="' . esc_attr($chart_id) . '" width="300" height="300"></canvas>';
-            wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js');
+            wp_enqueue_script(
+                'chartjs',
+                plugins_url('assets/chart.js', __FILE__),
+                array(),
+                filemtime(plugin_dir_path(__FILE__) . 'assets/chart.js'),
+                true
+            );
             $inline  = 'document.addEventListener("DOMContentLoaded",function(){var c=document.getElementById("' . esc_js($chart_id) . '");if(c){new Chart(c,{type:"radar",data:{labels:' . wp_json_encode($chart['labels']) . ',datasets:[{label:"' . esc_js($title) . '",data:' . wp_json_encode($chart['values']) . ',backgroundColor:"rgba(54,162,235,0.2)",borderColor:"rgba(54,162,235,1)"}]},options:{scales:{r:{min:0,max:100,beginAtZero:true}}});}});';
             wp_add_inline_script('chartjs', $inline);
         }
