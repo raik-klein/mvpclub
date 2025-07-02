@@ -7,7 +7,7 @@
     var useSelect = data.useSelect;
 
     registerBlockType('mvpclub/player-info', {
-        title: __('Spielerinfo', 'mvpclub'),
+        title: __('Scoutingbericht', 'mvpclub'),
         icon: 'id',
         category: 'mvpclub',
         attributes: {

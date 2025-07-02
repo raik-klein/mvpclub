@@ -276,42 +276,39 @@ function mvpclub_register_player_info_block() {
  */
 function mvpclub_render_player_info($attributes) {
     $player_id = !empty($attributes['playerId']) ? absint($attributes['playerId']) : 0;
-    if (!$player_id) return '';
-
-    $fields = mvpclub_player_fields();
-    $data = array();
-    foreach ($fields as $key => $label) {
-        $data[$key] = get_post_meta($player_id, $key, true);
+    if (!$player_id) {
+        return '';
     }
-    $title = get_the_title($player_id);
-    $img   = get_the_post_thumbnail($player_id, 'medium', array('style' => 'max-width:100%;height:auto;'));
-    $bg    = get_option('mvpclub_player_bg_color', '#f9f9f9');
-    $text  = get_option('mvpclub_player_text_color', '#000000');
 
-    ob_start();
-    echo '<div class="mvpclub-player-info" style="background:' . esc_attr($bg) . ';color:' . esc_attr($text) . ';padding:1em;">';
-    if ($img) echo '<div class="mvpclub-player-image">' . $img . '</div>';
-    echo '<h2 class="mvpclub-player-name">' . esc_html($title) . '</h2>';
-    echo '<ul class="mvpclub-player-data">';
-    foreach ($fields as $key => $label) {
-        if (!empty($data[$key])) {
-            echo '<li><strong>' . esc_html($label) . ':</strong> ' . esc_html($data[$key]) . '</li>';
+    $template = get_option('mvpclub_scout_template', '<p>[spieler-name] - [verein]</p>');
+
+    $placeholders = array(
+        '[spieler-name]'  => get_the_title($player_id),
+        '[geburtsdatum]'  => get_post_meta($player_id, 'birthdate', true),
+        '[geburtsort]'    => get_post_meta($player_id, 'birthplace', true),
+        '[groesse]'       => get_post_meta($player_id, 'height', true),
+        '[nationalitaet]' => get_post_meta($player_id, 'nationality', true),
+        '[position]'      => get_post_meta($player_id, 'position', true),
+        '[fuss]'          => get_post_meta($player_id, 'foot', true),
+        '[berater]'       => get_post_meta($player_id, 'agent', true),
+        '[verein]'        => get_post_meta($player_id, 'club', true),
+    );
+
+    if (strpos($template, '[bild]') !== false) {
+        $image = get_the_post_thumbnail($player_id, 'medium', array('style' => 'max-width:100%;height:auto;'));
+        $placeholders['[bild]'] = $image ? $image : '';
+    }
+
+    foreach ($placeholders as $tag => $value) {
+        if ($tag !== '[bild]') {
+            $placeholders[$tag] = esc_html($value);
         }
     }
-    echo '</ul>';
 
-    if (!empty($data['radar_chart'])) {
-        $chart = json_decode($data['radar_chart'], true);
-        if (!empty($chart['labels']) && !empty($chart['values'])) {
-            $chart_id = 'radar-chart-' . $player_id;
-            echo '<canvas id="' . esc_attr($chart_id) . '" width="300" height="300"></canvas>';
-            wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js');
-            $inline  = 'document.addEventListener("DOMContentLoaded",function(){var c=document.getElementById("' . esc_js($chart_id) . '");if(c){new Chart(c,{type:"radar",data:{labels:' . wp_json_encode($chart['labels']) . ',datasets:[{label:"' . esc_js($title) . '",data:' . wp_json_encode($chart['values']) . ',backgroundColor:"rgba(54,162,235,0.2)",borderColor:"rgba(54,162,235,1)"}]},options:{scales:{r:{min:0,max:100,beginAtZero:true}}});}});';
-            wp_add_inline_script('chartjs', $inline);
-        }
-    }
-    echo '</div>';
-    return ob_get_clean();
+    $content = str_replace(array_keys($placeholders), array_values($placeholders), $template);
+    $content = wpautop($content);
+
+    return '<div class="mvpclub-scout-preview" style="border:1px solid #ccc;padding:1em;">' . $content . '</div>';
 }
 
 /**
