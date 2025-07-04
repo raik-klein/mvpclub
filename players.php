@@ -278,7 +278,7 @@ function mvpclub_format_detail_position($value) {
 /**
  * Create HTML table from performance data JSON
  */
-function mvpclub_generate_statistik_table($json) {
+function mvpclub_generate_statistik_table($json, $position = '') {
     $rows = json_decode($json, true);
     if (!is_array($rows) || empty($rows)) return '';
 
@@ -295,6 +295,14 @@ function mvpclub_generate_statistik_table($json) {
             'tore'       => 'Tore',
             'assists'    => 'Assists',
             'minuten'    => 'Minuten'
+        ),
+        'headers_tor' => array(
+            'saison'     => 'Saison',
+            'wettbewerb' => 'Wettbewerb',
+            'spiele'     => 'Spiele',
+            'tore'       => 'Tore',
+            'assists'    => 'Assists',
+            'minuten'    => 'Minuten'
         )
     );
 
@@ -302,6 +310,8 @@ function mvpclub_generate_statistik_table($json) {
     $styles  = wp_parse_args($styles, $defaults);
     $styles['headers'] = isset($styles['headers']) && is_array($styles['headers'])
         ? wp_parse_args($styles['headers'], $defaults['headers']) : $defaults['headers'];
+    $styles['headers_tor'] = isset($styles['headers_tor']) && is_array($styles['headers_tor'])
+        ? wp_parse_args($styles['headers_tor'], $defaults['headers_tor']) : $defaults['headers_tor'];
 
     $table_style  = 'border-collapse:collapse;width:100%;' . esc_attr($styles['css']);
     $th_style     = 'background:' . esc_attr($styles['header_bg']) . ';color:' . esc_attr($styles['header_text']) . ';text-align:center;padding:12px 16px;border-bottom:1px solid ' . esc_attr($styles['border']) . ';font-weight:600;';
@@ -322,7 +332,7 @@ function mvpclub_generate_statistik_table($json) {
     }
     </style>';
 
-    $headers = $styles['headers'];
+    $headers = ($position === 'Tor') ? $styles['headers_tor'] : $styles['headers'];
 
     $html = $css . '<div class="mvpclub-statistik-wrapper"><table class="mvpclub-statistik" style="' . $table_style . '"><thead><tr>'
           . '<th style="' . $th_style . '">' . esc_html($headers['saison']) . '</th>'
@@ -376,7 +386,7 @@ function mvpclub_player_placeholders($player_id) {
         }
     }
 
-    $statistik_html = mvpclub_generate_statistik_table($data['performance_data']);
+    $statistik_html = mvpclub_generate_statistik_table($data['performance_data'], isset($data['position']) ? $data['position'] : '');
 
     $age_text = '';
     if (!empty($data['birthdate'])) {
@@ -1152,6 +1162,14 @@ function mvpclub_render_statistik_settings_page() {
                 'tore'       => sanitize_text_field($_POST['header_tore']),
                 'assists'    => sanitize_text_field($_POST['header_assists']),
                 'minuten'    => sanitize_text_field($_POST['header_minuten']),
+            ),
+            'headers_tor' => array(
+                'saison'     => sanitize_text_field($_POST['header_tor_saison']),
+                'wettbewerb' => sanitize_text_field($_POST['header_tor_wettbewerb']),
+                'spiele'     => sanitize_text_field($_POST['header_tor_spiele']),
+                'tore'       => sanitize_text_field($_POST['header_tor_tore']),
+                'assists'    => sanitize_text_field($_POST['header_tor_assists']),
+                'minuten'    => sanitize_text_field($_POST['header_tor_minuten']),
             )
         );
         update_option('mvpclub_statistik_styles', $styles);
@@ -1171,12 +1189,21 @@ function mvpclub_render_statistik_settings_page() {
             'tore'       => 'Tore',
             'assists'    => 'Assists',
             'minuten'    => 'Minuten'
+        ),
+        'headers_tor' => array(
+            'saison'     => 'Saison',
+            'wettbewerb' => 'Wettbewerb',
+            'spiele'     => 'Spiele',
+            'tore'       => 'Tore',
+            'assists'    => 'Assists',
+            'minuten'    => 'Minuten'
         )
     );
 
     $styles = get_option('mvpclub_statistik_styles', array());
     $styles = wp_parse_args($styles, $default_styles);
     $styles['headers'] = isset($styles['headers']) && is_array($styles['headers']) ? wp_parse_args($styles['headers'], $default_styles['headers']) : $default_styles['headers'];
+    $styles['headers_tor'] = isset($styles['headers_tor']) && is_array($styles['headers_tor']) ? wp_parse_args($styles['headers_tor'], $default_styles['headers_tor']) : $default_styles['headers_tor'];
 
     $player = get_posts(array(
         'title'       => 'Ardon Jashari',
@@ -1186,7 +1213,8 @@ function mvpclub_render_statistik_settings_page() {
     $preview = '';
     if ($player) {
         $json    = get_post_meta($player[0]->ID, 'performance_data', true);
-        $preview = mvpclub_generate_statistik_table($json);
+        $pos     = get_post_meta($player[0]->ID, 'position', true);
+        $preview = mvpclub_generate_statistik_table($json, $pos);
     }
     ?>
     <div class="wrap">
@@ -1216,27 +1244,45 @@ function mvpclub_render_statistik_settings_page() {
                 </tr>
                 <tr>
                     <th scope="row"><label for="header_saison">Spaltenname Saison</label></th>
-                    <td><input type="text" name="header_saison" id="header_saison" value="<?php echo esc_attr($styles['headers']['saison']); ?>" class="regular-text" /></td>
+                    <td>
+                        <input type="text" name="header_saison" id="header_saison" value="<?php echo esc_attr($styles['headers']['saison']); ?>" class="regular-text" />
+                        <input type="text" name="header_tor_saison" id="header_tor_saison" value="<?php echo esc_attr($styles['headers_tor']['saison']); ?>" class="regular-text" style="margin-left:4px" />
+                    </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="header_wettbewerb">Spaltenname Wettbewerb</label></th>
-                    <td><input type="text" name="header_wettbewerb" id="header_wettbewerb" value="<?php echo esc_attr($styles['headers']['wettbewerb']); ?>" class="regular-text" /></td>
+                    <td>
+                        <input type="text" name="header_wettbewerb" id="header_wettbewerb" value="<?php echo esc_attr($styles['headers']['wettbewerb']); ?>" class="regular-text" />
+                        <input type="text" name="header_tor_wettbewerb" id="header_tor_wettbewerb" value="<?php echo esc_attr($styles['headers_tor']['wettbewerb']); ?>" class="regular-text" style="margin-left:4px" />
+                    </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="header_spiele">Spaltenname Spiele</label></th>
-                    <td><input type="text" name="header_spiele" id="header_spiele" value="<?php echo esc_attr($styles['headers']['spiele']); ?>" class="regular-text" /></td>
+                    <td>
+                        <input type="text" name="header_spiele" id="header_spiele" value="<?php echo esc_attr($styles['headers']['spiele']); ?>" class="regular-text" />
+                        <input type="text" name="header_tor_spiele" id="header_tor_spiele" value="<?php echo esc_attr($styles['headers_tor']['spiele']); ?>" class="regular-text" style="margin-left:4px" />
+                    </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="header_tore">Spaltenname Tore</label></th>
-                    <td><input type="text" name="header_tore" id="header_tore" value="<?php echo esc_attr($styles['headers']['tore']); ?>" class="regular-text" /></td>
+                    <td>
+                        <input type="text" name="header_tore" id="header_tore" value="<?php echo esc_attr($styles['headers']['tore']); ?>" class="regular-text" />
+                        <input type="text" name="header_tor_tore" id="header_tor_tore" value="<?php echo esc_attr($styles['headers_tor']['tore']); ?>" class="regular-text" style="margin-left:4px" />
+                    </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="header_assists">Spaltenname Assists</label></th>
-                    <td><input type="text" name="header_assists" id="header_assists" value="<?php echo esc_attr($styles['headers']['assists']); ?>" class="regular-text" /></td>
+                    <td>
+                        <input type="text" name="header_assists" id="header_assists" value="<?php echo esc_attr($styles['headers']['assists']); ?>" class="regular-text" />
+                        <input type="text" name="header_tor_assists" id="header_tor_assists" value="<?php echo esc_attr($styles['headers_tor']['assists']); ?>" class="regular-text" style="margin-left:4px" />
+                    </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="header_minuten">Spaltenname Minuten</label></th>
-                    <td><input type="text" name="header_minuten" id="header_minuten" value="<?php echo esc_attr($styles['headers']['minuten']); ?>" class="regular-text" /></td>
+                    <td>
+                        <input type="text" name="header_minuten" id="header_minuten" value="<?php echo esc_attr($styles['headers']['minuten']); ?>" class="regular-text" />
+                        <input type="text" name="header_tor_minuten" id="header_tor_minuten" value="<?php echo esc_attr($styles['headers_tor']['minuten']); ?>" class="regular-text" style="margin-left:4px" />
+                    </td>
                 </tr>
             </table>
             <?php submit_button('Speichern'); ?>
