@@ -1353,8 +1353,22 @@ function mvpclub_player_sortable_columns($columns) {
 
 add_action('pre_get_posts', function($query){
     if (!is_admin() || !$query->is_main_query()) return;
-    if ($query->get('post_type') === 'mvpclub-spieler' && $query->get('orderby') === 'modified') {
+    if ($query->get('post_type') !== 'mvpclub-spieler') return;
+
+    $orderby = $query->get('orderby');
+    if ($orderby === 'modified') {
         $query->set('orderby', 'modified');
+        return;
+    }
+
+    $info = mvpclub_player_info_keys();
+    if (in_array($orderby, $info, true)) {
+        $query->set('meta_key', $orderby);
+        if (in_array($orderby, array('height','market_value','rating'), true)) {
+            $query->set('orderby', 'meta_value_num');
+        } else {
+            $query->set('orderby', 'meta_value');
+        }
     }
 });
 
