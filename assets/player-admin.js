@@ -40,7 +40,7 @@ jQuery(function($){
         addStatistikRow();
     });
 
-    $(document).on('click', '#mvpclub-load-seasons', function(e){
+$(document).on('click', '#mvpclub-load-seasons', function(e){
         e.preventDefault();
         var pid = $('#mvpclub-api-player-id').val();
         if(!pid) return;
@@ -54,6 +54,44 @@ jQuery(function($){
                 tbody.empty();
                 resp.data.forEach(function(year){
                     addStatistikRow(year);
+                });
+            }else if(resp.data){
+                alert(resp.data);
+            }
+        }, 'json');
+    });
+
+    $(document).on('click', '#mvpclub-load-stats', function(e){
+        e.preventDefault();
+        var pid = $('#mvpclub-api-player-id').val();
+        if(!pid) return;
+        var seasons = [];
+        $('#statistik-data-table tbody tr').each(function(){
+            var s = $(this).find('input[name="perf_saison[]"]').val();
+            if(s) seasons.push(s);
+        });
+        if(!seasons.length) return;
+        $.post(ajaxurl, {
+            action: 'mvpclub_load_stats',
+            nonce: mvpclubPlayerAdmin.nonce,
+            player_id: pid,
+            seasons: seasons
+        }, function(resp){
+            if(resp.success && resp.data){
+                $('#statistik-data-table tbody tr').each(function(){
+                    var yr = $(this).find('input[name="perf_saison[]"]').val();
+                    var d = resp.data[yr];
+                    if(d){
+                        var sel = $(this).find('select[name="perf_competition[]"]');
+                        if(sel.find('option[value="'+d.Wettbewerb+'"]').length===0){
+                            sel.append('<option value="'+d.Wettbewerb+'">'+d.Wettbewerb+'</option>');
+                        }
+                        sel.val(d.Wettbewerb);
+                        $(this).find('input[name="perf_games[]"]').val(d.Spiele);
+                        $(this).find('input[name="perf_goals[]"]').val(d.Tore);
+                        $(this).find('input[name="perf_assists[]"]').val(d.Assists);
+                        $(this).find('input[name="perf_minutes[]"]').val(d.Minuten);
+                    }
                 });
             }else if(resp.data){
                 alert(resp.data);

@@ -1217,6 +1217,43 @@ function mvpclub_ajax_load_seasons() {
     }
 }
 
+add_action('wp_ajax_mvpclub_load_stats', 'mvpclub_ajax_load_stats');
+function mvpclub_ajax_load_stats() {
+    check_ajax_referer('mvpclub_player_api', 'nonce');
+
+    $player_id = absint($_POST['player_id']);
+    $seasons   = isset($_POST['seasons']) ? array_map('intval', (array) $_POST['seasons']) : array();
+    if (!$player_id || empty($seasons)) {
+        wp_send_json_error('Missing parameters');
+    }
+
+    $data = array();
+    foreach ($seasons as $season) {
+        if (!$season) continue;
+        $res = mvpclub_api_football_get_player($player_id, $season);
+        if (is_wp_error($res)) {
+            wp_send_json_error($res->get_error_message());
+        }
+        if (empty($res['statistics'][0])) continue;
+        $stat = $res['statistics'][0];
+        $league = $stat['league']['name'] ?? '';
+        $label = mvpclub_match_competition_label($league);
+        $games = intval($stat['games']['appearences'] ?? $stat['games']['appearances'] ?? 0);
+        $goals = intval($stat['goals']['total'] ?? 0);
+        $assists = intval($stat['goals']['assists'] ?? 0);
+        $minutes = intval($stat['games']['minutes'] ?? 0);
+        $data[$season] = array(
+            'Wettbewerb' => $label,
+            'Spiele'     => $games,
+            'Tore'       => $goals,
+            'Assists'    => $assists,
+            'Minuten'    => $minutes,
+        );
+    }
+
+    wp_send_json_success($data);
+}
+
 /**
  * Render settings page for the Statistik table styling
  */

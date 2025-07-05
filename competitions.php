@@ -122,6 +122,22 @@ function mvpclub_competition_labels() {
     return $labels;
 }
 
+/**
+ * Try to match a league name from the API to a competition label.
+ * Returns the label with flag emoji if found, otherwise the input name.
+ */
+function mvpclub_match_competition_label($league_name) {
+    $comps = mvpclub_get_competitions();
+    $countries = mvpclub_get_country_map();
+    foreach ($comps as $c) {
+        if (strcasecmp($c['name'], $league_name) === 0) {
+            $emoji = isset($countries[$c['country']]['emoji']) ? $countries[$c['country']]['emoji'] : '';
+            return trim($emoji.' '.$c['name']);
+        }
+    }
+    return $league_name;
+}
+
 add_action('admin_menu', function(){
     add_submenu_page('mvpclub-main', 'Wettbewerbe', 'Wettbewerbe', 'edit_posts', 'mvpclub-wettbewerbe', 'mvpclub_render_competitions_page');
 });
