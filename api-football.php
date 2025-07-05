@@ -37,6 +37,30 @@ function mvpclub_api_football_request($endpoint, $params = array()) {
     return $data;
 }
 
+/**
+ * Return nationality label in plugin format (emoji + German name)
+ * from an English country name.
+ */
+function mvpclub_get_nationality_label($english_name) {
+    static $map = null;
+    if ($map === null) {
+        $map = array();
+        $path_en = plugin_dir_path(__FILE__) . 'assets/countries_en.json';
+        if (file_exists($path_en)) {
+            $en_map = json_decode(file_get_contents($path_en), true);
+            if (is_array($en_map)) {
+                $countries = mvpclub_get_country_map();
+                foreach ($en_map as $en => $code) {
+                    if (isset($countries[$code])) {
+                        $map[$en] = trim($countries[$code]['emoji'] . ' ' . $countries[$code]['name']);
+                    }
+                }
+            }
+        }
+    }
+    return isset($map[$english_name]) ? $map[$english_name] : '';
+}
+
 function mvpclub_api_football_get_player($player_id, $season = null) {
     if (!$season) {
         $season = date('Y');
@@ -96,10 +120,14 @@ function mvpclub_import_player_post($player_id, $season = null) {
     $player = $profiles[0]['player'];
     $stats  = array();
 
+    $full_name = trim(($player['firstname'] ?? '') . ' ' . ($player['lastname'] ?? ''));
+    if ($full_name === '') {
+        $full_name = isset($player['name']) ? $player['name'] : '';
+    }
     $post_id = wp_insert_post(array(
         'post_type'   => 'mvpclub-spieler',
         'post_status' => 'publish',
-        'post_title'  => sanitize_text_field($player['name']),
+        'post_title'  => sanitize_text_field($full_name),
     ));
     if (is_wp_error($post_id)) {
         return $post_id;
@@ -122,7 +150,12 @@ function mvpclub_import_player_post($player_id, $season = null) {
     }
 
     if (!empty($player['nationality'])) {
-        update_post_meta($post_id, 'nationality', $player['nationality']);
+        $nat_label = mvpclub_get_nationality_label($player['nationality']);
+        if ($nat_label) {
+            update_post_meta($post_id, 'nationality', $nat_label);
+        } else {
+            update_post_meta($post_id, 'nationality', $player['nationality']);
+        }
     }
 
     if (!empty($player['height'])) {
@@ -250,7 +283,7 @@ function mvpclub_render_api_football_settings_page() {
                         $link = wp_nonce_url(admin_url('admin.php?page=mvpclub-api-football&add_player=' . $p['id'] . '&player_id=' . urlencode($player_id)), 'mvpclub_add_player');
                     ?>
                         <tr>
-                            <td><?php echo esc_html($p['name']); ?></td>
+                            <td><?php echo esc_html(trim(($p['firstname'] ?? '') . ' ' . ($p['lastname'] ?? $p['name']))); ?></td>
                             <td><?php echo esc_html($team); ?></td>
                             <td><a href="<?php echo esc_url($link); ?>" class="button">Spieler hinzuf&uuml;gen</a></td>
                         </tr>
