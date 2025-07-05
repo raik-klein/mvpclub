@@ -55,7 +55,7 @@ $(document).on('click', '#mvpclub-load-seasons', function(e){
             if(resp.success && Array.isArray(resp.data)){
                 var tbody = $('#statistik-data-table tbody');
                 tbody.empty();
-                resp.data.forEach(function(year){
+                resp.data.slice().reverse().forEach(function(year){
                     addStatistikRow(year);
                 });
             }else if(resp.data){

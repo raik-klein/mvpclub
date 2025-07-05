@@ -233,8 +233,8 @@ if (defined('WP_CLI') && WP_CLI) {
 add_action('admin_menu', function() {
     add_submenu_page(
         'mvpclub-main',
-        'API-FOOTBALL',
-        'API-FOOTBALL',
+        'API',
+        'API',
         'manage_options',
         'mvpclub-api-football',
         'mvpclub_render_api_football_settings_page'
@@ -294,7 +294,7 @@ function mvpclub_render_api_football_settings_page() {
     $key = get_option('mvpclub_api_football_key', '');
     ?>
     <div class="wrap">
-        <h1>API-FOOTBALL</h1>
+        <h1>API</h1>
         <form method="post" action="">
             <?php wp_nonce_field('mvpclub_api_football_save','mvpclub_api_football_nonce'); ?>
             <table class="form-table">
