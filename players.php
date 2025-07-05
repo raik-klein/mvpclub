@@ -525,9 +525,34 @@ function mvpclub_player_admin_scripts($hook) {
         filemtime(plugin_dir_path(__FILE__) . 'assets/player-admin.js'),
         true
     );
+    $header_styles = get_option('mvpclub_statistik_styles', array());
+    $header_defaults = array(
+        'headers' => array(
+            'saison'     => 'Saison',
+            'wettbewerb' => 'Wettbewerb',
+            'spiele'     => 'Spiele',
+            'tore'       => 'Tore',
+            'assists'    => 'Assists',
+            'minuten'    => 'Minuten'
+        ),
+        'headers_tor' => array(
+            'saison'     => 'Saison',
+            'wettbewerb' => 'Wettbewerb',
+            'spiele'     => 'Spiele',
+            'tore'       => 'Tore',
+            'assists'    => 'Assists',
+            'minuten'    => 'Minuten'
+        )
+    );
+    $header_styles = wp_parse_args($header_styles, $header_defaults);
+    $header_styles['headers'] = isset($header_styles['headers']) && is_array($header_styles['headers']) ? wp_parse_args($header_styles['headers'], $header_defaults['headers']) : $header_defaults['headers'];
+    $header_styles['headers_tor'] = isset($header_styles['headers_tor']) && is_array($header_styles['headers_tor']) ? wp_parse_args($header_styles['headers_tor'], $header_defaults['headers_tor']) : $header_defaults['headers_tor'];
+
     wp_localize_script('mvpclub-player-admin', 'mvpclubPlayerAdmin', array(
-        'competitions' => mvpclub_competition_labels(),
+        'competitions'    => mvpclub_competition_labels(),
         'characteristics' => mvpclub_get_characteristics(),
+        'headers'         => $header_styles['headers'],
+        'headersTor'      => $header_styles['headers_tor'],
     ));
 
     wp_enqueue_style(
@@ -740,7 +765,34 @@ function mvpclub_player_meta_box($post) {
     echo '</table></div>';
 
     // Performance Tab
-    echo '<div id="tab-statistik" class="mvpclub-tab-content"><table id="statistik-data-table" class="widefat"><thead><tr><th>Saison</th><th>Wettbewerb</th><th>Spiele</th><th>Tore</th><th>Assists</th><th>Minuten</th><th></th></tr></thead><tbody>';
+    $stat_defaults = array(
+        'headers' => array(
+            'saison'     => 'Saison',
+            'wettbewerb' => 'Wettbewerb',
+            'spiele'     => 'Spiele',
+            'tore'       => 'Tore',
+            'assists'    => 'Assists',
+            'minuten'    => 'Minuten'
+        ),
+        'headers_tor' => array(
+            'saison'     => 'Saison',
+            'wettbewerb' => 'Wettbewerb',
+            'spiele'     => 'Spiele',
+            'tore'       => 'Tore',
+            'assists'    => 'Assists',
+            'minuten'    => 'Minuten'
+        )
+    );
+    $stat_styles = get_option('mvpclub_statistik_styles', array());
+    $stat_styles = wp_parse_args($stat_styles, $stat_defaults);
+    $stat_styles['headers'] = isset($stat_styles['headers']) && is_array($stat_styles['headers']) ? wp_parse_args($stat_styles['headers'], $stat_defaults['headers']) : $stat_defaults['headers'];
+    $stat_styles['headers_tor'] = isset($stat_styles['headers_tor']) && is_array($stat_styles['headers_tor']) ? wp_parse_args($stat_styles['headers_tor'], $stat_defaults['headers_tor']) : $stat_defaults['headers_tor'];
+    $headers = (isset($values['position']) && $values['position'] === 'Tor') ? $stat_styles['headers_tor'] : $stat_styles['headers'];
+
+    echo '<div id="tab-statistik" class="mvpclub-tab-content"><table id="statistik-data-table" class="widefat"><thead><tr><th>'
+        . esc_html($headers['saison']) . '</th><th>' . esc_html($headers['wettbewerb']) . '</th><th>'
+        . esc_html($headers['spiele']) . '</th><th>' . esc_html($headers['tore']) . '</th><th>'
+        . esc_html($headers['assists']) . '</th><th>' . esc_html($headers['minuten']) . '</th><th></th></tr></thead><tbody>';
     $perf = json_decode($values['performance_data'], true);
     if (!is_array($perf)) { $perf = array(); }
     foreach ($perf as $row) {
