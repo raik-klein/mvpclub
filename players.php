@@ -1411,7 +1411,9 @@ function mvpclub_player_admin_columns($columns) {
         $new[$key] = $label;
     }
     foreach ($info as $key) {
-        $new[$key] = isset($fields[$key]) ? $fields[$key] : $key;
+        $label = isset($fields[$key]) ? $fields[$key] : $key;
+        if ($key === 'birthdate') $label = 'Alter';
+        $new[$key] = $label;
     }
     return $new;
 }
@@ -1433,6 +1435,16 @@ function mvpclub_player_custom_column($column, $post_id) {
             }
         } elseif ($column === 'detail_position') {
             echo esc_html(mvpclub_format_detail_position(get_post_meta($post_id, 'detail_position', true)));
+        } elseif ($column === 'birthdate') {
+            $val = get_post_meta($post_id, 'birthdate', true);
+            $age = '';
+            if ($val) {
+                $d = DateTime::createFromFormat('d.m.Y', $val);
+                if ($d) {
+                    $age = (new DateTime())->diff($d)->y;
+                }
+            }
+            echo esc_html($age);
         } else {
             echo esc_html(get_post_meta($post_id, $column, true));
         }
