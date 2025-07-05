@@ -91,14 +91,18 @@ function mvpclub_api_football_get_player_profiles($player_id) {
     return isset($data['response']) ? $data['response'] : array();
 }
 
-function mvpclub_api_football_search_players($query, $season = null) {
+function mvpclub_api_football_search_players($query, $season = null, $league_id = null) {
     if (!$season) {
         $season = date('Y');
     }
-    $data = mvpclub_api_football_request('players', array(
+    $params = array(
         'search' => $query,
         'season' => $season,
-    ));
+    );
+    if ($league_id) {
+        $params['league'] = $league_id;
+    }
+    $data = mvpclub_api_football_request('players', $params);
 
     if (is_wp_error($data)) {
         return $data;
@@ -199,6 +203,19 @@ function mvpclub_api_football_get_player_seasons($player_id) {
     return isset($data['response']) ? $data['response'] : array();
 }
 
+function mvpclub_api_football_find_league_id($label) {
+    $name = trim(preg_replace('/^[^a-zA-Z0-9]+/u', '', $label));
+    if ($name === '') return '';
+    $data = mvpclub_api_football_request('leagues', array('search' => $name));
+    if (is_wp_error($data)) {
+        return $data;
+    }
+    if (empty($data['response'][0]['league']['id'])) {
+        return '';
+    }
+    return $data['response'][0]['league']['id'];
+}
+
 if (defined('WP_CLI') && WP_CLI) {
     WP_CLI::add_command('mvpclub import-player', function($args, $assoc_args) {
         list($player_id) = $args;
@@ -245,10 +262,19 @@ function mvpclub_render_api_football_settings_page() {
         }
     }
 
-    $player_id = isset($_GET['player_id']) ? intval($_GET['player_id']) : '';
+    $player_search = isset($_GET['player_search']) ? sanitize_text_field($_GET['player_search']) : '';
+    $search_league = isset($_GET['search_league']) ? wp_unslash($_GET['search_league']) : '';
     $results = array();
-    if ($player_id !== '') {
-        $result = mvpclub_api_football_get_player_profiles($player_id);
+    if ($player_search !== '') {
+        $league_id = '';
+        if ($search_league !== '') {
+            $league_id = mvpclub_api_football_find_league_id($search_league);
+            if (is_wp_error($league_id)) {
+                echo '<div class="error"><p>' . esc_html($league_id->get_error_message()) . '</p></div>';
+                $league_id = '';
+            }
+        }
+        $result = mvpclub_api_football_search_players($player_search, null, $league_id);
         if (is_wp_error($result)) {
             echo '<div class="error"><p>' . esc_html($result->get_error_message()) . '</p></div>';
         } else {
@@ -274,7 +300,8 @@ function mvpclub_render_api_football_settings_page() {
         <h2>Spieler-ID suchen</h2>
         <form method="get">
             <input type="hidden" name="page" value="mvpclub-api-football" />
-            <input name="player_id" type="text" value="<?php echo esc_attr($player_id); ?>" class="regular-text" />
+            <input name="player_search" type="text" value="<?php echo esc_attr($player_search); ?>" class="regular-text" />
+            <?php echo mvpclub_competition_select($search_league, 'search_league'); ?>
             <?php submit_button('Suchen', 'secondary', 'submit', false); ?>
         </form>
 
@@ -292,7 +319,7 @@ function mvpclub_render_api_football_settings_page() {
                     <?php foreach ($results as $row) :
                         $p = $row['player'];
                         $team = isset($row['statistics'][0]['team']['name']) ? $row['statistics'][0]['team']['name'] : '';
-                        $link = wp_nonce_url(admin_url('admin.php?page=mvpclub-api-football&add_player=' . $p['id'] . '&player_id=' . urlencode($player_id)), 'mvpclub_add_player');
+                        $link = wp_nonce_url(admin_url('admin.php?page=mvpclub-api-football&add_player=' . $p['id'] . '&player_search=' . urlencode($player_search) . '&search_league=' . urlencode($search_league)), 'mvpclub_add_player');
                     ?>
                         <tr>
                             <td><?php echo esc_html(trim(($p['firstname'] ?? '') . ' ' . ($p['lastname'] ?? $p['name']))); ?></td>

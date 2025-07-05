@@ -91,6 +91,7 @@ function mvpclub_player_fields() {
         'performance_data' => 'Statistik',
         'image'            => 'Bild',
         'radar_chart'      => 'Radar Chart',
+        'api_id'           => 'ID',
     );
 }
 
@@ -579,6 +580,7 @@ function mvpclub_player_meta_box($post) {
     echo '<a href="#" class="nav-tab" data-tab="scouting">Scouting</a>';
     echo '<a href="#" class="nav-tab" data-tab="statistik">Statistik</a>';
     echo '<a href="#" class="nav-tab" data-tab="radar">Radar</a>';
+    echo '<a href="#" class="nav-tab" data-tab="api">API</a>';
     echo '</h2>';
 
     // Information Tab
@@ -809,7 +811,7 @@ function mvpclub_player_meta_box($post) {
     }
     echo '</tbody></table>';
     echo '<p><button type="button" class="button" id="add-statistik-row">Zeile hinzufügen</button></p>';
-    echo '<p><input type="text" id="mvpclub-api-player-id" placeholder="Player ID" /> ';
+    echo '<p><input type="text" id="mvpclub-api-player-id" placeholder="Player ID" value="' . esc_attr($values['api_id']) . '" /> ';
     echo '<button type="button" class="button" id="mvpclub-load-seasons">Saisons laden</button> ';
     echo '<button type="button" class="button" id="mvpclub-load-stats">Daten laden</button></p></div>';
 
@@ -826,6 +828,11 @@ function mvpclub_player_meta_box($post) {
         echo '<output>' . esc_html($v) . '</output></td></tr>';
     }
     echo '</table></div></div>';
+
+    // API Tab
+    echo '<div id="tab-api" class="mvpclub-tab-content"><table class="form-table">';
+    echo '<tr><th><label for="api_id">ID</label></th><td><input type="text" name="api_id" id="api_id" value="' . esc_attr($values['api_id']) . '" class="regular-text" /></td></tr>';
+    echo '</table></div>';
 
     echo '</div>'; // end tabs
 }
