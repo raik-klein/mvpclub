@@ -183,13 +183,14 @@ function mvpclub_render_api_football_settings_page() {
         }
     }
 
-    $search = isset($_GET['player_search']) ? sanitize_text_field($_GET['player_search']) : '';
+    $player_id = isset($_GET['player_id']) ? intval($_GET['player_id']) : '';
     $results = array();
-    if ($search !== '') {
-        $results = mvpclub_api_football_search_players($search);
-        if (is_wp_error($results)) {
-            echo '<div class="error"><p>' . esc_html($results->get_error_message()) . '</p></div>';
-            $results = array();
+    if ($player_id !== '') {
+        $result = mvpclub_api_football_get_player($player_id);
+        if (is_wp_error($result)) {
+            echo '<div class="error"><p>' . esc_html($result->get_error_message()) . '</p></div>';
+        } else {
+            $results = array($result);
         }
     }
 
@@ -208,10 +209,10 @@ function mvpclub_render_api_football_settings_page() {
             <?php submit_button('Speichern'); ?>
         </form>
 
-        <h2>Spieler suchen</h2>
+        <h2>Spieler-ID suchen</h2>
         <form method="get">
             <input type="hidden" name="page" value="mvpclub-api-football" />
-            <input name="player_search" type="text" value="<?php echo esc_attr($search); ?>" class="regular-text" />
+            <input name="player_id" type="text" value="<?php echo esc_attr($player_id); ?>" class="regular-text" />
             <?php submit_button('Suchen', 'secondary', 'submit', false); ?>
         </form>
 
@@ -229,7 +230,7 @@ function mvpclub_render_api_football_settings_page() {
                     <?php foreach ($results as $row) :
                         $p = $row['player'];
                         $team = isset($row['statistics'][0]['team']['name']) ? $row['statistics'][0]['team']['name'] : '';
-                        $link = wp_nonce_url(admin_url('admin.php?page=mvpclub-api-football&add_player=' . $p['id'] . '&player_search=' . urlencode($search)), 'mvpclub_add_player');
+                        $link = wp_nonce_url(admin_url('admin.php?page=mvpclub-api-football&add_player=' . $p['id'] . '&player_id=' . urlencode($player_id)), 'mvpclub_add_player');
                     ?>
                         <tr>
                             <td><?php echo esc_html($p['name']); ?></td>
