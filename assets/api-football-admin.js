@@ -1,4 +1,6 @@
 jQuery(function($){
+    var results = [], perPage = 10, currentPage = 1;
+
     function buildRow(p){
         var tr = $('<tr>');
         tr.append('<td>'+p.id+'</td>');
@@ -10,9 +12,36 @@ jQuery(function($){
         tr.append('<td>'+(p.nationality||'')+'</td>');
         tr.append('<td>'+(p.height||'')+'</td>');
         tr.append('<td>'+(p.position||'')+'</td>');
-        var btn = $('<button>').addClass('button mvpclub-add-player').text('Spieler hinzuf\u00fcgen').data('player', p);
+        var btn = $('<button>').addClass('button mvpclub-add-player').text('Hinzuf\u00fcgen').data('player', p);
         tr.append($('<td>').append(btn));
         return tr;
+    }
+
+    function render(page){
+        if(page) currentPage = page;
+        var tbody = $('#mvpclub-search-results tbody');
+        tbody.empty();
+        var start = (currentPage-1)*perPage;
+        var slice = results.slice(start, start+perPage);
+        if(slice.length){
+            slice.forEach(function(p){ tbody.append(buildRow(p)); });
+        }else{
+            tbody.append('<tr><td colspan="10">Keine Ergebnisse</td></tr>');
+        }
+        renderPagination();
+    }
+
+    function renderPagination(){
+        var total = Math.ceil(results.length/perPage);
+        var div = $('#mvpclub-search-pagination');
+        div.empty();
+        if(total <= 1) return;
+        for(var i=1;i<=total;i++){
+            var a = $('<a href="#">').text(i).data('page',i);
+            if(i===currentPage) a.addClass('current');
+            div.append(a);
+            if(i<total) div.append(' ');
+        }
     }
 
     $('#mvpclub-player-search-form').on('submit', function(e){
@@ -23,16 +52,17 @@ jQuery(function($){
             nonce: mvpclubAPIFootball.nonce,
             query: query
         }, function(resp){
-            var tbody = $('#mvpclub-search-results tbody');
-            tbody.empty();
+            results = [];
             if(resp.success && Array.isArray(resp.data)){
-                resp.data.forEach(function(row){
-                    tbody.append(buildRow(row.player));
-                });
-            }else{
-                tbody.append('<tr><td colspan="10">'+(resp.data||'Keine Ergebnisse')+'</td></tr>');
+                resp.data.forEach(function(row){ results.push(row.player); });
             }
+            render(1);
         }, 'json');
+    });
+
+    $(document).on('click','#mvpclub-search-pagination a', function(e){
+        e.preventDefault();
+        render($(this).data('page'));
     });
 
     $(document).on('click','.mvpclub-add-player', function(e){
@@ -41,7 +71,7 @@ jQuery(function($){
         $.post(mvpclubAPIFootball.ajaxUrl, {
             action: 'mvpclub_add_player',
             nonce: mvpclubAPIFootball.addNonce,
-            player: player
+            player: JSON.stringify(player)
         }, function(resp){
             if(resp.success && resp.data && resp.data.edit_link){
                 window.location.href = resp.data.edit_link;

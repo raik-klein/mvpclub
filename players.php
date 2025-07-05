@@ -811,8 +811,7 @@ function mvpclub_player_meta_box($post) {
     }
     echo '</tbody></table>';
     echo '<p><button type="button" class="button" id="add-statistik-row">Zeile hinzufügen</button></p>';
-    echo '<p><input type="text" id="mvpclub-api-player-id" placeholder="Player ID" value="' . esc_attr($values['api_id']) . '" /> ';
-    echo '<button type="button" class="button" id="mvpclub-load-seasons">Saisons laden</button> ';
+    echo '<p><button type="button" class="button" id="mvpclub-load-seasons">Saisons laden</button> ';
     echo '<button type="button" class="button" id="mvpclub-load-stats">Daten laden</button></p></div>';
 
     // Radar Tab

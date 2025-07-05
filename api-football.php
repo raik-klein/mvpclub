@@ -195,11 +195,17 @@ function mvpclub_ajax_search_players(){
 add_action('wp_ajax_mvpclub_add_player', 'mvpclub_ajax_add_player');
 function mvpclub_ajax_add_player(){
     check_ajax_referer('mvpclub_add_player', 'nonce');
-    $player = isset($_POST['player']) ? (array) $_POST['player'] : array();
+    $raw = isset($_POST['player']) ? $_POST['player'] : '';
+    if (is_string($raw)) {
+        $player = json_decode(wp_unslash($raw), true);
+    } elseif (is_array($raw)) {
+        $player = array_map('wp_unslash', $raw);
+    } else {
+        $player = array();
+    }
     if(empty($player['id'])){
         wp_send_json_error('Missing data');
     }
-    $player = array_map('wp_unslash', $player);
     $id = mvpclub_create_player_post($player);
     if(is_wp_error($id)){
         wp_send_json_error($id->get_error_message());
@@ -305,6 +311,12 @@ function mvpclub_render_api_football_settings_page() {
         </form>
 
         <h2>Ergebnisse</h2>
+        <style>
+            #mvpclub-search-results .mvpclub-add-player{display:block;width:100%;box-sizing:border-box;}
+            #mvpclub-search-pagination{margin-top:10px;}
+            #mvpclub-search-pagination a{margin-right:5px;text-decoration:none;}
+            #mvpclub-search-pagination a.current{font-weight:bold;}
+        </style>
         <table id="mvpclub-search-results" class="widefat fixed striped">
             <thead>
                 <tr>
@@ -335,13 +347,14 @@ function mvpclub_render_api_football_settings_page() {
                         <td><?php echo esc_html($p['nationality']); ?></td>
                         <td><?php echo esc_html($p['height']); ?></td>
                         <td><?php echo esc_html($p['position']); ?></td>
-                        <td><button class="button mvpclub-add-player" data-player='<?php echo esc_attr(wp_json_encode($p)); ?>'>Spieler hinzuf&uuml;gen</button></td>
+                        <td><button class="button mvpclub-add-player" data-player='<?php echo esc_attr(wp_json_encode($p)); ?>'>Hinzuf&uuml;gen</button></td>
                     </tr>
                 <?php endforeach; else: ?>
                     <tr><td colspan="10">Keine Ergebnisse</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
+        <div id="mvpclub-search-pagination"></div>
     </div>
     <?php
 }
