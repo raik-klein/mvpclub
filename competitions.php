@@ -158,7 +158,7 @@ function mvpclub_match_competition_label($league_name, $league_country = '') {
 }
 
 add_action('admin_menu', function(){
-    add_submenu_page('mvpclub-main', 'Wettbewerbe', 'Wettbewerbe', 'edit_posts', 'mvpclub-wettbewerbe', 'mvpclub_render_competitions_page');
+    add_submenu_page('mvpclub-main', __('Wettbewerbe', 'mvpclub'), __('Wettbewerbe', 'mvpclub'), 'edit_posts', 'mvpclub-wettbewerbe', 'mvpclub_render_competitions_page');
 });
 
 function mvpclub_render_competitions_page() {
@@ -194,10 +194,10 @@ function mvpclub_render_competitions_page() {
     mvpclub_sort_competitions($comps);
     ?>
     <div class="wrap">
-        <h1>Wettbewerbe</h1>
+        <h1><?php echo esc_html__('Wettbewerbe', 'mvpclub'); ?></h1>
         <table class="widefat fixed">
             <thead>
-                <tr><th>Nation</th><th>Level</th><th>Name</th><th>Aktion</th></tr>
+                <tr><th><?php echo esc_html__('Nation', 'mvpclub'); ?></th><th><?php echo esc_html__('Level', 'mvpclub'); ?></th><th><?php echo esc_html__('Name', 'mvpclub'); ?></th><th><?php echo esc_html__('Aktion', 'mvpclub'); ?></th></tr>
             </thead>
             <tbody>
                 <?php foreach ($comps as $id => $c): ?>
@@ -210,7 +210,7 @@ function mvpclub_render_competitions_page() {
                             <?php wp_nonce_field('mvpclub_competitions_action','mvpclub_competitions_nonce'); ?>
                             <input type="hidden" name="action" value="delete" />
                             <input type="hidden" name="id" value="<?php echo $id; ?>" />
-                            <?php submit_button('Löschen', 'delete', 'submit', false, array('onclick' => "return confirm('Wirklich löschen?');")); ?>
+                            <?php submit_button(__('Löschen', 'mvpclub'), 'delete', 'submit', false, array('onclick' => "return confirm('" . esc_js(__('Wirklich löschen?', 'mvpclub')) . "');")); ?>
                         </form>
                         <form method="post" style="display:inline-block;">
                             <?php wp_nonce_field('mvpclub_competitions_action','mvpclub_competitions_nonce'); ?>
@@ -227,7 +227,7 @@ function mvpclub_render_competitions_page() {
                                 <?php endforeach; ?>
                             </select>
                             <input type="text" name="name" value="<?php echo esc_attr($c['name']); ?>" />
-                            <?php submit_button('Speichern', 'primary', 'submit', false); ?>
+                            <?php submit_button(__('Speichern', 'mvpclub'), 'primary', 'submit', false); ?>
                         </form>
                     </td>
                 </tr>
@@ -251,7 +251,7 @@ function mvpclub_render_competitions_page() {
                             </select>
                         </td>
                         <td><input type="text" name="name" /></td>
-                        <td><?php submit_button('Hinzufügen', 'primary', 'submit', false); ?></td>
+                        <td><?php submit_button(__('Hinzufügen', 'mvpclub'), 'primary', 'submit', false); ?></td>
                     </form>
                 </tr>
             </tbody>
