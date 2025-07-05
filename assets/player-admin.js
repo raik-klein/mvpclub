@@ -1,4 +1,7 @@
 jQuery(function($){
+    function getPlayerId(){
+        return $('#api_id').val();
+    }
     function competitionSelect(){
         var select = $('<select name="perf_competition[]">').append('<option value="">-</option>');
         if(window.mvpclubPlayerAdmin && Array.isArray(window.mvpclubPlayerAdmin.competitions)){
@@ -9,9 +12,9 @@ jQuery(function($){
         return select;
     }
 
-    function addStatistikRow(){
+    function addStatistikRow(season){
         var row = $('<tr>')
-            .append('<td><input type="text" name="perf_saison[]" /></td>')
+            .append('<td><input type="text" name="perf_saison[]" value="'+(season||'')+'" /></td>')
             .append($('<td>').append(competitionSelect()))
             .append('<td><input type="number" name="perf_games[]" /></td>')
             .append('<td><input type="number" name="perf_goals[]" /></td>')
@@ -21,15 +24,91 @@ jQuery(function($){
         $('#statistik-data-table tbody').append(row);
     }
 
+    function updateStatHeaders(){
+        if(!window.mvpclubPlayerAdmin) return;
+        var headers = $('#position').val()==='Tor' ? window.mvpclubPlayerAdmin.headersTor : window.mvpclubPlayerAdmin.headers;
+        var ths = $('#statistik-data-table thead th');
+        if(ths.length>=6){
+            ths.eq(0).text(headers.saison);
+            ths.eq(1).text(headers.wettbewerb);
+            ths.eq(2).text(headers.spiele);
+            ths.eq(3).text(headers.tore);
+            ths.eq(4).text(headers.assists);
+            ths.eq(5).text(headers.minuten);
+        }
+    }
+
     $(document).on('click', '#add-statistik-row', function(e){
         e.preventDefault();
         addStatistikRow();
+    });
+
+$(document).on('click', '#mvpclub-load-seasons', function(e){
+        e.preventDefault();
+        var pid = getPlayerId();
+        if(!pid) return;
+        $.post(ajaxurl, {
+            action: 'mvpclub_load_seasons',
+            nonce: mvpclubPlayerAdmin.nonce,
+            player_id: pid
+        }, function(resp){
+            if(resp.success && Array.isArray(resp.data)){
+                var tbody = $('#statistik-data-table tbody');
+                tbody.empty();
+                resp.data.slice().reverse().forEach(function(year){
+                    addStatistikRow(year);
+                });
+            }else if(resp.data){
+                alert(resp.data);
+            }
+        }, 'json');
+    });
+
+$(document).on('click', '#mvpclub-load-stats', function(e){
+        e.preventDefault();
+        var pid = getPlayerId();
+        if(!pid) return;
+        var seasons = [];
+        $('#statistik-data-table tbody tr').each(function(){
+            var s = $(this).find('input[name="perf_saison[]"]').val();
+            if(s) seasons.push(s);
+        });
+        if(!seasons.length) return;
+        $.post(ajaxurl, {
+            action: 'mvpclub_load_stats',
+            nonce: mvpclubPlayerAdmin.nonce,
+            player_id: pid,
+            seasons: seasons
+        }, function(resp){
+            if(resp.success && resp.data){
+                $('#statistik-data-table tbody tr').each(function(){
+                    var yr = $(this).find('input[name="perf_saison[]"]').val();
+                    var d = resp.data[yr];
+                    if(d){
+                        var sel = $(this).find('select[name="perf_competition[]"]');
+                        if(sel.find('option[value="'+d.Wettbewerb+'"]').length===0){
+                            sel.append('<option value="'+d.Wettbewerb+'">'+d.Wettbewerb+'</option>');
+                        }
+                        sel.val(d.Wettbewerb);
+                        $(this).find('input[name="perf_games[]"]').val(d.Spiele);
+                        $(this).find('input[name="perf_goals[]"]').val(d.Tore);
+                        $(this).find('input[name="perf_assists[]"]').val(d.Assists);
+                        $(this).find('input[name="perf_minutes[]"]').val(d.Minuten);
+                    }
+                });
+            }else if(resp.data){
+                alert(resp.data);
+            }
+        }, 'json');
     });
 
     $(document).on('click', '.remove-statistik-row', function(e){
         e.preventDefault();
         $(this).closest('tr').remove();
     });
+
+    $(document).on('change', '#position', updateStatHeaders);
+    updateStatHeaders();
 
     function characteristicSelect(type, name){
         var select = $('<select name="'+name+'[]">').append('<option value=""></option>');

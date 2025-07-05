@@ -93,6 +93,19 @@ function mvpclub_render_scouting_posts($attributes = [], $content = '') {
  */
 function mvpclub_extract_rating_from_post($post_id) {
     $content = get_post_field('post_content', $post_id);
+
+    // Versuche zuerst, den Spieler aus dem Scoutingbericht-Block zu ermitteln
+    if (preg_match('/<!--\s*wp:mvpclub\/player-info\s+({.*?})\s*(?:\/)?-->/', $content, $m)) {
+        $attrs = json_decode($m[1], true);
+        if (isset($attrs['playerId'])) {
+            $rating = get_post_meta(intval($attrs['playerId']), 'rating', true);
+            if ($rating !== '' && is_numeric($rating)) {
+                return number_format((float)$rating, 1, '.', '');
+            }
+        }
+    }
+
+    // Fallback: alte Methode
     preg_match('/Bewertung.*?(\d+(?:\.\d+)?)/', $content, $matches);
     return !empty($matches[1]) ? number_format(floatval($matches[1]), 1, '.', '') : 'KA';
 }

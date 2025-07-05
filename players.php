@@ -8,16 +8,16 @@ add_action('init', 'mvpclub_register_player_cpt');
 function mvpclub_register_player_cpt() {
     register_post_type('mvpclub-spieler', array(
         'labels' => array(
-            'name'          => 'Spieler',
-            'singular_name' => 'Spieler',
-            'add_new'       => 'Spieler hinzufügen',
-            'add_new_item'  => 'Spieler hinzufügen',
-            'edit_item'     => 'Spieler bearbeiten',
-            'new_item'      => 'Neuer Spieler',
-            'view_item'     => 'Spieler ansehen',
-            'search_items'  => 'Spieler durchsuchen',
-            'not_found'     => 'Kein Spieler gefunden',
-            'not_found_in_trash' => 'Kein Spieler im Papierkorb',
+            'name'          => __('Spieler', 'mvpclub'),
+            'singular_name' => __('Spieler', 'mvpclub'),
+            'add_new'       => __('Spieler hinzufügen', 'mvpclub'),
+            'add_new_item'  => __('Spieler hinzufügen', 'mvpclub'),
+            'edit_item'     => __('Spieler bearbeiten', 'mvpclub'),
+            'new_item'      => __('Neuer Spieler', 'mvpclub'),
+            'view_item'     => __('Spieler ansehen', 'mvpclub'),
+            'search_items'  => __('Spieler durchsuchen', 'mvpclub'),
+            'not_found'     => __('Kein Spieler gefunden', 'mvpclub'),
+            'not_found_in_trash' => __('Kein Spieler im Papierkorb', 'mvpclub'),
         ),
         'public'      => false,
         'publicly_queryable' => false,
@@ -74,28 +74,29 @@ function mvpclub_migrate_player_cpt() {
  */
 function mvpclub_player_fields() {
     return array(
-        'birthdate'        => 'Geburtsdatum',
-        'birthplace'       => 'Geburtsort',
-        'height'           => 'Größe',
-        'nationality'      => 'Nationalität',
-        'position'         => 'Position',
-        'detail_position'  => 'Detailposition',
-        'foot'             => 'Fuß',
-        'club'             => 'Verein',
-        'market_value'     => 'Marktwert',
-        'rating'           => 'Bewertung',
-        'spielstil'        => 'Spielstil',
-        'rolle'            => 'Rolle',
-        'strengths'        => 'Stärken',
-        'weaknesses'       => 'Schwächen',
-        'performance_data' => 'Statistik',
-        'image'            => 'Bild',
-        'radar_chart'      => 'Radar Chart',
+        'birthdate'        => __('Geburtsdatum', 'mvpclub'),
+        'birthplace'       => __('Geburtsort', 'mvpclub'),
+        'height'           => __('Größe', 'mvpclub'),
+        'nationality'      => __('Nationalität', 'mvpclub'),
+        'position'         => __('Position', 'mvpclub'),
+        'detail_position'  => __('Detailposition', 'mvpclub'),
+        'foot'             => __('Fuß', 'mvpclub'),
+        'club'             => __('Verein', 'mvpclub'),
+        'market_value'     => __('Marktwert', 'mvpclub'),
+        'rating'           => __('Bewertung', 'mvpclub'),
+        'spielstil'        => __('Spielstil', 'mvpclub'),
+        'rolle'            => __('Rolle', 'mvpclub'),
+        'strengths'        => __('Stärken', 'mvpclub'),
+        'weaknesses'       => __('Schwächen', 'mvpclub'),
+        'performance_data' => __('Statistik', 'mvpclub'),
+        'image'            => __('Bild', 'mvpclub'),
+        'radar_chart'      => __('Radar Chart', 'mvpclub'),
+        'api_id'           => __('ID', 'mvpclub'),
     );
 }
 
 function mvpclub_player_info_keys() {
-    return array('image','birthdate','nationality','birthplace','position','detail_position','height','foot','club','market_value');
+    return array('image','birthdate','nationality','birthplace','position','detail_position','height','foot','club','market_value','rating');
 }
 
 /**
@@ -278,7 +279,7 @@ function mvpclub_format_detail_position($value) {
 /**
  * Create HTML table from performance data JSON
  */
-function mvpclub_generate_statistik_table($json) {
+function mvpclub_generate_statistik_table($json, $position = '') {
     $rows = json_decode($json, true);
     if (!is_array($rows) || empty($rows)) return '';
 
@@ -287,7 +288,16 @@ function mvpclub_generate_statistik_table($json) {
         'header_text' => '#000000',
         'border'      => '#eeeeee',
         'odd_bg'      => '#ffffff',
+        'css'         => '',
         'headers'     => array(
+            'saison'     => 'Saison',
+            'wettbewerb' => 'Wettbewerb',
+            'spiele'     => 'Spiele',
+            'tore'       => 'Tore',
+            'assists'    => 'Assists',
+            'minuten'    => 'Minuten'
+        ),
+        'headers_tor' => array(
             'saison'     => 'Saison',
             'wettbewerb' => 'Wettbewerb',
             'spiele'     => 'Spiele',
@@ -301,8 +311,10 @@ function mvpclub_generate_statistik_table($json) {
     $styles  = wp_parse_args($styles, $defaults);
     $styles['headers'] = isset($styles['headers']) && is_array($styles['headers'])
         ? wp_parse_args($styles['headers'], $defaults['headers']) : $defaults['headers'];
+    $styles['headers_tor'] = isset($styles['headers_tor']) && is_array($styles['headers_tor'])
+        ? wp_parse_args($styles['headers_tor'], $defaults['headers_tor']) : $defaults['headers_tor'];
 
-    $table_style  = 'border-collapse:collapse;width:100%;';
+    $table_style  = 'border-collapse:collapse;width:100%;' . esc_attr($styles['css']);
     $th_style     = 'background:' . esc_attr($styles['header_bg']) . ';color:' . esc_attr($styles['header_text']) . ';text-align:center;padding:12px 16px;border-bottom:1px solid ' . esc_attr($styles['border']) . ';font-weight:600;';
     $td_style     = 'text-align:center;padding:12px 16px;border-bottom:1px solid ' . esc_attr($styles['border']) . ';';
 
@@ -314,14 +326,14 @@ function mvpclub_generate_statistik_table($json) {
     .mvpclub-statistik th:nth-child(2){text-align:left;}
     @media screen and (max-width:600px){
         .mvpclub-statistik thead{display:none;}
-        .mvpclub-statistik, .mvpclub-statistik tbody, .mvpclub-statistik tr, .mvpclub-statistik td{display:block;width:100%;}
+        .mvpclub-statistik, .mvpclub-statistik tbody, .mvpclub-statistik tr{display:block;width:100%;}
         .mvpclub-statistik tr{margin-bottom:1rem;}
-        .mvpclub-statistik td{border:none;border-bottom:1px solid ' . esc_attr($styles['border']) . ';position:relative;padding-left:50%;text-align:left;}
-        .mvpclub-statistik td:before{content:attr(data-label);position:absolute;left:0;width:45%;padding-left:15px;font-weight:bold;}
+        .mvpclub-statistik td{display:flex;justify-content:space-between;align-items:flex-start;border:none;border-bottom:1px solid ' . esc_attr($styles['border']) . ';padding:8px 12px;box-sizing:border-box;word-break:break-word;}
+        .mvpclub-statistik td:before{content:attr(data-label);font-weight:bold;padding-right:10px;}
     }
     </style>';
 
-    $headers = $styles['headers'];
+    $headers = ($position === 'Tor') ? $styles['headers_tor'] : $styles['headers'];
 
     $html = $css . '<div class="mvpclub-statistik-wrapper"><table class="mvpclub-statistik" style="' . $table_style . '"><thead><tr>'
           . '<th style="' . $th_style . '">' . esc_html($headers['saison']) . '</th>'
@@ -375,7 +387,7 @@ function mvpclub_player_placeholders($player_id) {
         }
     }
 
-    $statistik_html = mvpclub_generate_statistik_table($data['performance_data']);
+    $statistik_html = mvpclub_generate_statistik_table($data['performance_data'], isset($data['position']) ? $data['position'] : '');
 
     $age_text = '';
     if (!empty($data['birthdate'])) {
@@ -426,7 +438,7 @@ function mvpclub_player_placeholders($player_id) {
         '[fuss]'            => isset($data['foot']) ? $data['foot'] : '',
         '[verein]'          => isset($data['club']) ? $data['club'] : '',
         '[marktwert]'       => isset($data['market_value']) ? $data['market_value'] : '',
-        '[bewertung]'       => isset($data['rating']) ? $data['rating'] : '',
+        '[bewertung]'       => isset($data['rating']) && $data['rating'] !== '' ? number_format((float)$data['rating'], 1) : '',
         '[spielstil]'       => isset($data['spielstil']) ? $data['spielstil'] : '',
         '[rolle]'           => isset($data['rolle']) ? mvpclub_role_name($data['rolle']) : '',
         '[staerken]'        => $strengths_html,
@@ -514,9 +526,35 @@ function mvpclub_player_admin_scripts($hook) {
         filemtime(plugin_dir_path(__FILE__) . 'assets/player-admin.js'),
         true
     );
+    $header_styles = get_option('mvpclub_statistik_styles', array());
+    $header_defaults = array(
+        'headers' => array(
+            'saison'     => 'Saison',
+            'wettbewerb' => 'Wettbewerb',
+            'spiele'     => 'Spiele',
+            'tore'       => 'Tore',
+            'assists'    => 'Assists',
+            'minuten'    => 'Minuten'
+        ),
+        'headers_tor' => array(
+            'saison'     => 'Saison',
+            'wettbewerb' => 'Wettbewerb',
+            'spiele'     => 'Spiele',
+            'tore'       => 'Tore',
+            'assists'    => 'Assists',
+            'minuten'    => 'Minuten'
+        )
+    );
+    $header_styles = wp_parse_args($header_styles, $header_defaults);
+    $header_styles['headers'] = isset($header_styles['headers']) && is_array($header_styles['headers']) ? wp_parse_args($header_styles['headers'], $header_defaults['headers']) : $header_defaults['headers'];
+    $header_styles['headers_tor'] = isset($header_styles['headers_tor']) && is_array($header_styles['headers_tor']) ? wp_parse_args($header_styles['headers_tor'], $header_defaults['headers_tor']) : $header_defaults['headers_tor'];
+
     wp_localize_script('mvpclub-player-admin', 'mvpclubPlayerAdmin', array(
-        'competitions' => mvpclub_competition_labels(),
+        'competitions'    => mvpclub_competition_labels(),
         'characteristics' => mvpclub_get_characteristics(),
+        'headers'         => $header_styles['headers'],
+        'headersTor'      => $header_styles['headers_tor'],
+        'nonce'           => wp_create_nonce('mvpclub_player_api'),
     ));
 
     wp_enqueue_style(
@@ -542,6 +580,7 @@ function mvpclub_player_meta_box($post) {
     echo '<a href="#" class="nav-tab" data-tab="scouting">Scouting</a>';
     echo '<a href="#" class="nav-tab" data-tab="statistik">Statistik</a>';
     echo '<a href="#" class="nav-tab" data-tab="radar">Radar</a>';
+    echo '<a href="#" class="nav-tab" data-tab="api">API</a>';
     echo '</h2>';
 
     // Information Tab
@@ -670,6 +709,9 @@ function mvpclub_player_meta_box($post) {
     // Scouting Tab
     echo '<div id="tab-scouting" class="mvpclub-tab-content"><table class="form-table">';
     $rating = isset($values['rating']) && $values['rating'] !== '' ? $values['rating'] : '3.0';
+    if (is_numeric($rating)) {
+        $rating = number_format((float)$rating, 1);
+    }
     echo '<tr><th><label for="rating">' . esc_html($fields['rating']) . '</label></th><td><input type="range" name="rating" id="rating" min="1" max="5" step="0.5" value="' . esc_attr($rating) . '" oninput="this.nextElementSibling.value=this.value" /> <output>' . esc_html($rating) . '</output><br />';
     echo '<pre class="mvpclub-rating-info" style="margin-top:4px;white-space:pre-wrap;">5.0 (S): Weltklassespieler
 4.5 (A+): CL-Schlüsselspieler
@@ -699,6 +741,7 @@ function mvpclub_player_meta_box($post) {
             $s = mvpclub_characteristic_id_by_name($s);
         }
     }
+    unset($s);
     $weaknesses = json_decode($values['weaknesses'], true);
     if (!is_array($weaknesses)) { $weaknesses = array(); }
     foreach ($weaknesses as &$w) {
@@ -706,25 +749,53 @@ function mvpclub_player_meta_box($post) {
             $w = mvpclub_characteristic_id_by_name($w);
         }
     }
+    unset($w);
 
     echo '<tr><th><label>Stärken</label></th><td>';
     echo '<ul id="mvpclub-strengths-list" class="mvpclub-characteristic-list">';
     foreach ($strengths as $s) {
         echo '<li>' . mvpclub_characteristic_select($type, 'strengths[]', $s) . ' <button type="button" class="button remove-characteristic">X</button></li>';
     }
-    echo '</ul><p><button type="button" class="button" id="add-strength">Hinzufügen</button></p></td></tr>';
+    echo '</ul><p><button type="button" class="button" id="add-strength">' . esc_html__('Hinzufügen', 'mvpclub') . '</button></p></td></tr>';
 
     echo '<tr><th><label>Schwächen</label></th><td>';
     echo '<ul id="mvpclub-weaknesses-list" class="mvpclub-characteristic-list">';
     foreach ($weaknesses as $w) {
         echo '<li>' . mvpclub_characteristic_select($type, 'weaknesses[]', $w) . ' <button type="button" class="button remove-characteristic">X</button></li>';
     }
-    echo '</ul><p><button type="button" class="button" id="add-weakness">Hinzufügen</button></p></td></tr>';
+    echo '</ul><p><button type="button" class="button" id="add-weakness">' . esc_html__('Hinzufügen', 'mvpclub') . '</button></p></td></tr>';
 
     echo '</table></div>';
 
     // Performance Tab
-    echo '<div id="tab-statistik" class="mvpclub-tab-content"><table id="statistik-data-table" class="widefat"><thead><tr><th>Saison</th><th>Wettbewerb</th><th>Spiele</th><th>Tore</th><th>Assists</th><th>Minuten</th><th></th></tr></thead><tbody>';
+    $stat_defaults = array(
+        'headers' => array(
+            'saison'     => 'Saison',
+            'wettbewerb' => 'Wettbewerb',
+            'spiele'     => 'Spiele',
+            'tore'       => 'Tore',
+            'assists'    => 'Assists',
+            'minuten'    => 'Minuten'
+        ),
+        'headers_tor' => array(
+            'saison'     => 'Saison',
+            'wettbewerb' => 'Wettbewerb',
+            'spiele'     => 'Spiele',
+            'tore'       => 'Tore',
+            'assists'    => 'Assists',
+            'minuten'    => 'Minuten'
+        )
+    );
+    $stat_styles = get_option('mvpclub_statistik_styles', array());
+    $stat_styles = wp_parse_args($stat_styles, $stat_defaults);
+    $stat_styles['headers'] = isset($stat_styles['headers']) && is_array($stat_styles['headers']) ? wp_parse_args($stat_styles['headers'], $stat_defaults['headers']) : $stat_defaults['headers'];
+    $stat_styles['headers_tor'] = isset($stat_styles['headers_tor']) && is_array($stat_styles['headers_tor']) ? wp_parse_args($stat_styles['headers_tor'], $stat_defaults['headers_tor']) : $stat_defaults['headers_tor'];
+    $headers = (isset($values['position']) && $values['position'] === 'Tor') ? $stat_styles['headers_tor'] : $stat_styles['headers'];
+
+    echo '<div id="tab-statistik" class="mvpclub-tab-content"><table id="statistik-data-table" class="widefat"><thead><tr><th>'
+        . esc_html($headers['saison']) . '</th><th>' . esc_html($headers['wettbewerb']) . '</th><th>'
+        . esc_html($headers['spiele']) . '</th><th>' . esc_html($headers['tore']) . '</th><th>'
+        . esc_html($headers['assists']) . '</th><th>' . esc_html($headers['minuten']) . '</th><th></th></tr></thead><tbody>';
     $perf = json_decode($values['performance_data'], true);
     if (!is_array($perf)) { $perf = array(); }
     foreach ($perf as $row) {
@@ -739,7 +810,9 @@ function mvpclub_player_meta_box($post) {
         echo '</tr>';
     }
     echo '</tbody></table>';
-    echo '<p><button type="button" class="button" id="add-statistik-row">Zeile hinzufügen</button></p></div>';
+    echo '<p><button type="button" class="button" id="add-statistik-row">Zeile hinzufügen</button></p>';
+    echo '<p><button type="button" class="button" id="mvpclub-load-seasons">Saisons laden</button> ';
+    echo '<button type="button" class="button" id="mvpclub-load-stats">Daten laden</button></p></div>';
 
     // Radar Tab
     echo '<div id="tab-radar" class="mvpclub-tab-content"><div class="mvpclub-radar-flex"><canvas id="mvpclub-radar-preview" width="250" height="250"></canvas><table class="form-table mvpclub-radar-settings">';
@@ -754,6 +827,11 @@ function mvpclub_player_meta_box($post) {
         echo '<output>' . esc_html($v) . '</output></td></tr>';
     }
     echo '</table></div></div>';
+
+    // API Tab
+    echo '<div id="tab-api" class="mvpclub-tab-content"><table class="form-table">';
+    echo '<tr><th><label for="api_id">ID</label></th><td><input type="text" name="api_id" id="api_id" value="' . esc_attr($values['api_id']) . '" class="regular-text" /></td></tr>';
+    echo '</table></div>';
 
     echo '</div>'; // end tabs
 }
@@ -823,6 +901,7 @@ add_action('save_post_mvpclub-spieler', function($post_id) {
         } elseif ($key === 'rating') {
             $rating = isset($_POST['rating']) ? floatval($_POST['rating']) : '';
             if ($rating !== '') {
+                $rating = number_format($rating, 1);
                 update_post_meta($post_id, 'rating', $rating);
             } else {
                 delete_post_meta($post_id, 'rating');
@@ -918,7 +997,7 @@ function mvpclub_render_scout_settings_page() {
                     <button type="button" class="insert-placeholder button" data-placeholder="<?php echo esc_attr($tag); ?>"><?php echo esc_html($tag); ?></button>
                 <?php endforeach; ?>
             </p>
-            <?php submit_button('Speichern'); ?>
+            <?php submit_button(__('Speichern', 'mvpclub')); ?>
         </form>
 
         <h2>Vorschau <select id="mvpclub_preview_player" style="float:right;">
@@ -1016,9 +1095,9 @@ function mvpclub_characteristics_section($wrap = false) {
                 <?php endforeach; ?>
                 </tbody>
             </table>
-            <p><button type="button" class="button mvpclub-add-attr" data-group="<?php echo esc_attr($grp); ?>">Hinzufügen</button></p>
+            <p><button type="button" class="button mvpclub-add-attr" data-group="<?php echo esc_attr($grp); ?>"><?php echo esc_html__('Hinzufügen', 'mvpclub'); ?></button></p>
         <?php endforeach; ?>
-        <?php submit_button('Speichern'); ?>
+        <?php submit_button(__('Speichern', 'mvpclub')); ?>
     </form>
     <script type="text/template" id="attr-row-template">
         <tr>
@@ -1127,6 +1206,61 @@ function mvpclub_ajax_preview_code() {
     wp_die();
 }
 
+add_action('wp_ajax_mvpclub_load_seasons', 'mvpclub_ajax_load_seasons');
+function mvpclub_ajax_load_seasons() {
+    check_ajax_referer('mvpclub_player_api', 'nonce');
+
+    $player_id = absint($_POST['player_id']);
+    if (!$player_id) {
+        wp_send_json_error('Missing player ID');
+    }
+
+    $result = mvpclub_api_football_get_player_seasons($player_id);
+    if (is_wp_error($result)) {
+        wp_send_json_error($result->get_error_message());
+    } else {
+        wp_send_json_success($result);
+    }
+}
+
+add_action('wp_ajax_mvpclub_load_stats', 'mvpclub_ajax_load_stats');
+function mvpclub_ajax_load_stats() {
+    check_ajax_referer('mvpclub_player_api', 'nonce');
+
+    $player_id = absint($_POST['player_id']);
+    $seasons   = isset($_POST['seasons']) ? array_map('intval', (array) $_POST['seasons']) : array();
+    if (!$player_id || empty($seasons)) {
+        wp_send_json_error('Missing parameters');
+    }
+
+    $data = array();
+    foreach ($seasons as $season) {
+        if (!$season) continue;
+        $res = mvpclub_api_football_get_player($player_id, $season);
+        if (is_wp_error($res)) {
+            wp_send_json_error($res->get_error_message());
+        }
+        if (empty($res['statistics'][0])) continue;
+        $stat = $res['statistics'][0];
+        $league = $stat['league']['name'] ?? '';
+        $country = $stat['league']['country'] ?? '';
+        $label = mvpclub_match_competition_label($league, $country);
+        $games = intval($stat['games']['appearences'] ?? $stat['games']['appearances'] ?? 0);
+        $goals = intval($stat['goals']['total'] ?? 0);
+        $assists = intval($stat['goals']['assists'] ?? 0);
+        $minutes = intval($stat['games']['minutes'] ?? 0);
+        $data[$season] = array(
+            'Wettbewerb' => $label,
+            'Spiele'     => $games,
+            'Tore'       => $goals,
+            'Assists'    => $assists,
+            'Minuten'    => $minutes,
+        );
+    }
+
+    wp_send_json_success($data);
+}
+
 /**
  * Render settings page for the Statistik table styling
  */
@@ -1137,6 +1271,7 @@ function mvpclub_render_statistik_settings_page() {
             'header_text' => sanitize_hex_color($_POST['header_text']),
             'border'      => sanitize_hex_color($_POST['border']),
             'odd_bg'      => sanitize_hex_color($_POST['odd_bg']),
+            'css'         => wp_unslash($_POST['table_css']),
             'headers'     => array(
                 'saison'     => sanitize_text_field($_POST['header_saison']),
                 'wettbewerb' => sanitize_text_field($_POST['header_wettbewerb']),
@@ -1144,6 +1279,14 @@ function mvpclub_render_statistik_settings_page() {
                 'tore'       => sanitize_text_field($_POST['header_tore']),
                 'assists'    => sanitize_text_field($_POST['header_assists']),
                 'minuten'    => sanitize_text_field($_POST['header_minuten']),
+            ),
+            'headers_tor' => array(
+                'saison'     => sanitize_text_field($_POST['header_tor_saison']),
+                'wettbewerb' => sanitize_text_field($_POST['header_tor_wettbewerb']),
+                'spiele'     => sanitize_text_field($_POST['header_tor_spiele']),
+                'tore'       => sanitize_text_field($_POST['header_tor_tore']),
+                'assists'    => sanitize_text_field($_POST['header_tor_assists']),
+                'minuten'    => sanitize_text_field($_POST['header_tor_minuten']),
             )
         );
         update_option('mvpclub_statistik_styles', $styles);
@@ -1155,7 +1298,16 @@ function mvpclub_render_statistik_settings_page() {
         'header_text' => '#000000',
         'border'      => '#eeeeee',
         'odd_bg'      => '#ffffff',
+        'css'         => '',
         'headers'     => array(
+            'saison'     => 'Saison',
+            'wettbewerb' => 'Wettbewerb',
+            'spiele'     => 'Spiele',
+            'tore'       => 'Tore',
+            'assists'    => 'Assists',
+            'minuten'    => 'Minuten'
+        ),
+        'headers_tor' => array(
             'saison'     => 'Saison',
             'wettbewerb' => 'Wettbewerb',
             'spiele'     => 'Spiele',
@@ -1168,6 +1320,7 @@ function mvpclub_render_statistik_settings_page() {
     $styles = get_option('mvpclub_statistik_styles', array());
     $styles = wp_parse_args($styles, $default_styles);
     $styles['headers'] = isset($styles['headers']) && is_array($styles['headers']) ? wp_parse_args($styles['headers'], $default_styles['headers']) : $default_styles['headers'];
+    $styles['headers_tor'] = isset($styles['headers_tor']) && is_array($styles['headers_tor']) ? wp_parse_args($styles['headers_tor'], $default_styles['headers_tor']) : $default_styles['headers_tor'];
 
     $player = get_posts(array(
         'title'       => 'Ardon Jashari',
@@ -1177,7 +1330,8 @@ function mvpclub_render_statistik_settings_page() {
     $preview = '';
     if ($player) {
         $json    = get_post_meta($player[0]->ID, 'performance_data', true);
-        $preview = mvpclub_generate_statistik_table($json);
+        $pos     = get_post_meta($player[0]->ID, 'position', true);
+        $preview = mvpclub_generate_statistik_table($json, $pos);
     }
     ?>
     <div class="wrap">
@@ -1185,6 +1339,10 @@ function mvpclub_render_statistik_settings_page() {
         <form method="post">
             <?php wp_nonce_field('mvpclub_statistik_settings','mvpclub_statistik_nonce'); ?>
             <table class="form-table">
+                <tr>
+                    <th scope="row"><label for="table_css">CSS</label></th>
+                    <td><input type="text" name="table_css" id="table_css" value="<?php echo esc_attr($styles['css']); ?>" class="regular-text" /></td>
+                </tr>
                 <tr>
                     <th scope="row"><label for="header_bg">Header-Hintergrund</label></th>
                     <td><input type="color" name="header_bg" id="header_bg" value="<?php echo esc_attr($styles['header_bg']); ?>" /></td>
@@ -1203,30 +1361,48 @@ function mvpclub_render_statistik_settings_page() {
                 </tr>
                 <tr>
                     <th scope="row"><label for="header_saison">Spaltenname Saison</label></th>
-                    <td><input type="text" name="header_saison" id="header_saison" value="<?php echo esc_attr($styles['headers']['saison']); ?>" class="regular-text" /></td>
+                    <td>
+                        <input type="text" name="header_saison" id="header_saison" value="<?php echo esc_attr($styles['headers']['saison']); ?>" class="regular-text" />
+                        <input type="text" name="header_tor_saison" id="header_tor_saison" value="<?php echo esc_attr($styles['headers_tor']['saison']); ?>" class="regular-text" style="margin-left:4px" />
+                    </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="header_wettbewerb">Spaltenname Wettbewerb</label></th>
-                    <td><input type="text" name="header_wettbewerb" id="header_wettbewerb" value="<?php echo esc_attr($styles['headers']['wettbewerb']); ?>" class="regular-text" /></td>
+                    <td>
+                        <input type="text" name="header_wettbewerb" id="header_wettbewerb" value="<?php echo esc_attr($styles['headers']['wettbewerb']); ?>" class="regular-text" />
+                        <input type="text" name="header_tor_wettbewerb" id="header_tor_wettbewerb" value="<?php echo esc_attr($styles['headers_tor']['wettbewerb']); ?>" class="regular-text" style="margin-left:4px" />
+                    </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="header_spiele">Spaltenname Spiele</label></th>
-                    <td><input type="text" name="header_spiele" id="header_spiele" value="<?php echo esc_attr($styles['headers']['spiele']); ?>" class="regular-text" /></td>
+                    <td>
+                        <input type="text" name="header_spiele" id="header_spiele" value="<?php echo esc_attr($styles['headers']['spiele']); ?>" class="regular-text" />
+                        <input type="text" name="header_tor_spiele" id="header_tor_spiele" value="<?php echo esc_attr($styles['headers_tor']['spiele']); ?>" class="regular-text" style="margin-left:4px" />
+                    </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="header_tore">Spaltenname Tore</label></th>
-                    <td><input type="text" name="header_tore" id="header_tore" value="<?php echo esc_attr($styles['headers']['tore']); ?>" class="regular-text" /></td>
+                    <td>
+                        <input type="text" name="header_tore" id="header_tore" value="<?php echo esc_attr($styles['headers']['tore']); ?>" class="regular-text" />
+                        <input type="text" name="header_tor_tore" id="header_tor_tore" value="<?php echo esc_attr($styles['headers_tor']['tore']); ?>" class="regular-text" style="margin-left:4px" />
+                    </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="header_assists">Spaltenname Assists</label></th>
-                    <td><input type="text" name="header_assists" id="header_assists" value="<?php echo esc_attr($styles['headers']['assists']); ?>" class="regular-text" /></td>
+                    <td>
+                        <input type="text" name="header_assists" id="header_assists" value="<?php echo esc_attr($styles['headers']['assists']); ?>" class="regular-text" />
+                        <input type="text" name="header_tor_assists" id="header_tor_assists" value="<?php echo esc_attr($styles['headers_tor']['assists']); ?>" class="regular-text" style="margin-left:4px" />
+                    </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="header_minuten">Spaltenname Minuten</label></th>
-                    <td><input type="text" name="header_minuten" id="header_minuten" value="<?php echo esc_attr($styles['headers']['minuten']); ?>" class="regular-text" /></td>
+                    <td>
+                        <input type="text" name="header_minuten" id="header_minuten" value="<?php echo esc_attr($styles['headers']['minuten']); ?>" class="regular-text" />
+                        <input type="text" name="header_tor_minuten" id="header_tor_minuten" value="<?php echo esc_attr($styles['headers_tor']['minuten']); ?>" class="regular-text" style="margin-left:4px" />
+                    </td>
                 </tr>
             </table>
-            <?php submit_button('Speichern'); ?>
+            <?php submit_button(__('Speichern', 'mvpclub')); ?>
         </form>
 
         <h2>Live-Vorschau</h2>
@@ -1243,13 +1419,14 @@ function mvpclub_render_statistik_settings_page() {
             var ht = document.getElementById('header_text').value;
             var b  = document.getElementById('border').value;
             var ob = document.getElementById('odd_bg').value;
+            var css = document.getElementById('table_css').value;
             var hs = document.getElementById('header_saison').value;
             var hw = document.getElementById('header_wettbewerb').value;
             var hsp = document.getElementById('header_spiele').value;
             var hto = document.getElementById('header_tore').value;
             var has = document.getElementById('header_assists').value;
             var hmi = document.getElementById('header_minuten').value;
-            table.style.border = '1px solid '+b;
+            table.style.cssText = 'border-collapse:collapse;width:100%;border:1px solid '+b+';'+css;
             var heads = [hs, hw, hsp, hto, has, hmi];
             table.querySelectorAll('thead th').forEach(function(th, i){
                 th.style.background = hb;
@@ -1275,7 +1452,7 @@ function mvpclub_render_statistik_settings_page() {
                 }
             });
         }
-        document.querySelectorAll('#header_bg,#header_text,#border,#odd_bg,#header_saison,#header_wettbewerb,#header_spiele,#header_tore,#header_assists,#header_minuten').forEach(function(el){
+        document.querySelectorAll('#table_css,#header_bg,#header_text,#border,#odd_bg,#header_saison,#header_wettbewerb,#header_spiele,#header_tore,#header_assists,#header_minuten').forEach(function(el){
             el.addEventListener('input', update);
         });
         update();
@@ -1299,7 +1476,9 @@ function mvpclub_player_admin_columns($columns) {
         $new[$key] = $label;
     }
     foreach ($info as $key) {
-        $new[$key] = isset($fields[$key]) ? $fields[$key] : $key;
+        $label = isset($fields[$key]) ? $fields[$key] : $key;
+        if ($key === 'birthdate') $label = 'Alter';
+        $new[$key] = $label;
     }
     return $new;
 }
@@ -1321,6 +1500,16 @@ function mvpclub_player_custom_column($column, $post_id) {
             }
         } elseif ($column === 'detail_position') {
             echo esc_html(mvpclub_format_detail_position(get_post_meta($post_id, 'detail_position', true)));
+        } elseif ($column === 'birthdate') {
+            $val = get_post_meta($post_id, 'birthdate', true);
+            $age = '';
+            if ($val) {
+                $d = DateTime::createFromFormat('d.m.Y', $val);
+                if ($d) {
+                    $age = (new DateTime())->diff($d)->y;
+                }
+            }
+            echo esc_html($age);
         } else {
             echo esc_html(get_post_meta($post_id, $column, true));
         }
@@ -1339,8 +1528,22 @@ function mvpclub_player_sortable_columns($columns) {
 
 add_action('pre_get_posts', function($query){
     if (!is_admin() || !$query->is_main_query()) return;
-    if ($query->get('post_type') === 'mvpclub-spieler' && $query->get('orderby') === 'modified') {
+    if ($query->get('post_type') !== 'mvpclub-spieler') return;
+
+    $orderby = $query->get('orderby');
+    if ($orderby === 'modified') {
         $query->set('orderby', 'modified');
+        return;
+    }
+
+    $info = mvpclub_player_info_keys();
+    if (in_array($orderby, $info, true)) {
+        $query->set('meta_key', $orderby);
+        if (in_array($orderby, array('height','market_value','rating'), true)) {
+            $query->set('orderby', 'meta_value_num');
+        } else {
+            $query->set('orderby', 'meta_value');
+        }
     }
 });
 
