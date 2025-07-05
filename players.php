@@ -95,7 +95,7 @@ function mvpclub_player_fields() {
 }
 
 function mvpclub_player_info_keys() {
-    return array('image','birthdate','nationality','birthplace','position','detail_position','height','foot','club','market_value');
+    return array('image','birthdate','nationality','birthplace','position','detail_position','height','foot','club','market_value','rating');
 }
 
 /**
