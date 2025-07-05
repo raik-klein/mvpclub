@@ -91,6 +91,7 @@ function mvpclub_player_fields() {
         'performance_data' => 'Statistik',
         'image'            => 'Bild',
         'radar_chart'      => 'Radar Chart',
+        'api_id'           => 'ID',
     );
 }
 
@@ -553,6 +554,7 @@ function mvpclub_player_admin_scripts($hook) {
         'characteristics' => mvpclub_get_characteristics(),
         'headers'         => $header_styles['headers'],
         'headersTor'      => $header_styles['headers_tor'],
+        'nonce'           => wp_create_nonce('mvpclub_player_api'),
     ));
 
     wp_enqueue_style(
@@ -578,6 +580,7 @@ function mvpclub_player_meta_box($post) {
     echo '<a href="#" class="nav-tab" data-tab="scouting">Scouting</a>';
     echo '<a href="#" class="nav-tab" data-tab="statistik">Statistik</a>';
     echo '<a href="#" class="nav-tab" data-tab="radar">Radar</a>';
+    echo '<a href="#" class="nav-tab" data-tab="api">API</a>';
     echo '</h2>';
 
     // Information Tab
@@ -807,7 +810,10 @@ function mvpclub_player_meta_box($post) {
         echo '</tr>';
     }
     echo '</tbody></table>';
-    echo '<p><button type="button" class="button" id="add-statistik-row">Zeile hinzufügen</button></p></div>';
+    echo '<p><button type="button" class="button" id="add-statistik-row">Zeile hinzufügen</button></p>';
+    echo '<p><input type="text" id="mvpclub-api-player-id" placeholder="Player ID" value="' . esc_attr($values['api_id']) . '" /> ';
+    echo '<button type="button" class="button" id="mvpclub-load-seasons">Saisons laden</button> ';
+    echo '<button type="button" class="button" id="mvpclub-load-stats">Daten laden</button></p></div>';
 
     // Radar Tab
     echo '<div id="tab-radar" class="mvpclub-tab-content"><div class="mvpclub-radar-flex"><canvas id="mvpclub-radar-preview" width="250" height="250"></canvas><table class="form-table mvpclub-radar-settings">';
@@ -822,6 +828,11 @@ function mvpclub_player_meta_box($post) {
         echo '<output>' . esc_html($v) . '</output></td></tr>';
     }
     echo '</table></div></div>';
+
+    // API Tab
+    echo '<div id="tab-api" class="mvpclub-tab-content"><table class="form-table">';
+    echo '<tr><th><label for="api_id">ID</label></th><td><input type="text" name="api_id" id="api_id" value="' . esc_attr($values['api_id']) . '" class="regular-text" /></td></tr>';
+    echo '</table></div>';
 
     echo '</div>'; // end tabs
 }
@@ -1194,6 +1205,61 @@ function mvpclub_ajax_preview_code() {
 
     echo $content;
     wp_die();
+}
+
+add_action('wp_ajax_mvpclub_load_seasons', 'mvpclub_ajax_load_seasons');
+function mvpclub_ajax_load_seasons() {
+    check_ajax_referer('mvpclub_player_api', 'nonce');
+
+    $player_id = absint($_POST['player_id']);
+    if (!$player_id) {
+        wp_send_json_error('Missing player ID');
+    }
+
+    $result = mvpclub_api_football_get_player_seasons($player_id);
+    if (is_wp_error($result)) {
+        wp_send_json_error($result->get_error_message());
+    } else {
+        wp_send_json_success($result);
+    }
+}
+
+add_action('wp_ajax_mvpclub_load_stats', 'mvpclub_ajax_load_stats');
+function mvpclub_ajax_load_stats() {
+    check_ajax_referer('mvpclub_player_api', 'nonce');
+
+    $player_id = absint($_POST['player_id']);
+    $seasons   = isset($_POST['seasons']) ? array_map('intval', (array) $_POST['seasons']) : array();
+    if (!$player_id || empty($seasons)) {
+        wp_send_json_error('Missing parameters');
+    }
+
+    $data = array();
+    foreach ($seasons as $season) {
+        if (!$season) continue;
+        $res = mvpclub_api_football_get_player($player_id, $season);
+        if (is_wp_error($res)) {
+            wp_send_json_error($res->get_error_message());
+        }
+        if (empty($res['statistics'][0])) continue;
+        $stat = $res['statistics'][0];
+        $league = $stat['league']['name'] ?? '';
+        $country = $stat['league']['country'] ?? '';
+        $label = mvpclub_match_competition_label($league, $country);
+        $games = intval($stat['games']['appearences'] ?? $stat['games']['appearances'] ?? 0);
+        $goals = intval($stat['goals']['total'] ?? 0);
+        $assists = intval($stat['goals']['assists'] ?? 0);
+        $minutes = intval($stat['games']['minutes'] ?? 0);
+        $data[$season] = array(
+            'Wettbewerb' => $label,
+            'Spiele'     => $games,
+            'Tore'       => $goals,
+            'Assists'    => $assists,
+            'Minuten'    => $minutes,
+        );
+    }
+
+    wp_send_json_success($data);
 }
 
 /**
