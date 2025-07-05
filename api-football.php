@@ -198,12 +198,15 @@ function mvpclub_ajax_add_player(){
     $raw = isset($_POST['player']) ? $_POST['player'] : '';
     if (is_string($raw)) {
         $player = json_decode(wp_unslash($raw), true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            wp_send_json_error('Ungültige Daten');
+        }
     } elseif (is_array($raw)) {
         $player = array_map('wp_unslash', $raw);
     } else {
         $player = array();
     }
-    if(empty($player['id'])){
+    if (empty($player['id'])) {
         wp_send_json_error('Missing data');
     }
     $id = mvpclub_create_player_post($player);
