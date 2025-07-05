@@ -84,13 +84,17 @@ function mvpclub_api_football_search_players($query, $season = null) {
 }
 
 function mvpclub_import_player_post($player_id, $season = null) {
-    $result = mvpclub_api_football_get_player($player_id, $season);
-    if (is_wp_error($result)) {
-        return $result;
+    $profiles = mvpclub_api_football_get_player_profiles($player_id);
+    if (is_wp_error($profiles)) {
+        return $profiles;
     }
 
-    $player = $result['player'];
-    $stats  = isset($result['statistics'][0]) ? $result['statistics'][0] : array();
+    if (empty($profiles[0]['player'])) {
+        return new WP_Error('not_found', 'Player not found');
+    }
+
+    $player = $profiles[0]['player'];
+    $stats  = array();
 
     $post_id = wp_insert_post(array(
         'post_type'   => 'mvpclub-spieler',
@@ -127,14 +131,15 @@ function mvpclub_import_player_post($player_id, $season = null) {
         }
     }
 
-    if (!empty($stats['games']['position'])) {
+    $position_value = !empty($stats['games']['position']) ? $stats['games']['position'] : (isset($player['position']) ? $player['position'] : '');
+    if ($position_value) {
         $map = array(
             'Goalkeeper' => 'Tor',
             'Defender'   => 'Abwehr',
             'Midfielder' => 'Mittelfeld',
             'Attacker'   => 'Sturm',
         );
-        $position = isset($map[$stats['games']['position']]) ? $map[$stats['games']['position']] : $stats['games']['position'];
+        $position = isset($map[$position_value]) ? $map[$position_value] : $position_value;
         update_post_meta($post_id, 'position', $position);
     }
 
