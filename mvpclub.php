@@ -4,6 +4,7 @@ Plugin Name: mvpclub
 Description: Das mvpclub.de Plugin mit Shortcodes, Gutenberg-Blöcken und Admin-Menü.
 Author: Raik Klein
 Version: 3.3.0
+Text Domain: mvpclub
 */
 
 defined('ABSPATH') || exit;

@@ -8,7 +8,7 @@ function mvpclub_get_api_football_key() {
 function mvpclub_api_football_request($endpoint, $params = array()) {
     $key = mvpclub_get_api_football_key();
     if (empty($key)) {
-        return new WP_Error('missing_key', 'API key not set');
+        return new WP_Error('missing_key', __('API key not set', 'mvpclub'));
     }
 
     $url = 'https://v3.football.api-sports.io/' . ltrim($endpoint, '/');
@@ -29,7 +29,7 @@ function mvpclub_api_football_request($endpoint, $params = array()) {
 
     $code = wp_remote_retrieve_response_code($response);
     if ($code !== 200) {
-        return new WP_Error('bad_response', 'API request failed', $response);
+        return new WP_Error('bad_response', __('API request failed', 'mvpclub'), $response);
     }
 
     $body = wp_remote_retrieve_body($response);
@@ -74,7 +74,7 @@ function mvpclub_api_football_get_player($player_id, $season = null) {
         return $data;
     }
     if (empty($data['response'][0])) {
-        return new WP_Error('not_found', 'Player not found');
+        return new WP_Error('not_found', __('Player not found', 'mvpclub'));
     }
     return $data['response'][0];
 }
@@ -150,7 +150,7 @@ function mvpclub_import_player_post($player_id, $season = null) {
         return $profiles;
     }
     if (empty($profiles[0]['player'])) {
-        return new WP_Error('not_found', 'Player not found');
+        return new WP_Error('not_found', __('Player not found', 'mvpclub'));
     }
 
     return mvpclub_create_player_post($profiles[0]['player']);
@@ -199,7 +199,7 @@ function mvpclub_ajax_add_player(){
     if (is_string($raw)) {
         $player = json_decode(wp_unslash($raw), true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            wp_send_json_error('Ungültige Daten');
+            wp_send_json_error(__('Ungültige Daten', 'mvpclub'));
         }
     } elseif (is_array($raw)) {
         $player = array_map('wp_unslash', $raw);
@@ -207,7 +207,7 @@ function mvpclub_ajax_add_player(){
         $player = array();
     }
     if (empty($player['id'])) {
-        wp_send_json_error('Missing data');
+        wp_send_json_error(__('Missing data', 'mvpclub'));
     }
     $id = mvpclub_create_player_post($player);
     if(is_wp_error($id)){
@@ -233,8 +233,8 @@ if (defined('WP_CLI') && WP_CLI) {
 add_action('admin_menu', function() {
     add_submenu_page(
         'mvpclub-main',
-        'API',
-        'API',
+        __('API', 'mvpclub'),
+        __('API', 'mvpclub'),
         'manage_options',
         'mvpclub-api-football',
         'mvpclub_render_api_football_settings_page'
@@ -265,7 +265,7 @@ function mvpclub_render_api_football_settings_page() {
 
     if (isset($_POST['mvpclub_api_key']) && check_admin_referer('mvpclub_api_football_save', 'mvpclub_api_football_nonce')) {
         update_option('mvpclub_api_football_key', sanitize_text_field($_POST['mvpclub_api_key']));
-        echo '<div class="updated"><p>Einstellungen gespeichert.</p></div>';
+        echo '<div class="updated"><p>' . esc_html__('Einstellungen gespeichert.', 'mvpclub') . '</p></div>';
     }
 
     $import_result = null;
@@ -276,7 +276,7 @@ function mvpclub_render_api_football_settings_page() {
             echo '<div class="error"><p>' . esc_html($import_result->get_error_message()) . '</p></div>';
         } else {
             $edit_link = admin_url('post.php?post=' . $import_result . '&action=edit');
-            echo '<div class="updated"><p>Spieler importiert. <a href="' . esc_url($edit_link) . '">Profil bearbeiten</a></p></div>';
+            echo '<div class="updated"><p>' . sprintf(esc_html__('Spieler importiert. %sProfil bearbeiten%s', 'mvpclub'), '<a href="' . esc_url($edit_link) . '">', '</a>') . '</p></div>';
         }
     }
 
@@ -294,26 +294,26 @@ function mvpclub_render_api_football_settings_page() {
     $key = get_option('mvpclub_api_football_key', '');
     ?>
     <div class="wrap">
-        <h1>API</h1>
+        <h1><?php echo esc_html__('API', 'mvpclub'); ?></h1>
         <form method="post" action="">
             <?php wp_nonce_field('mvpclub_api_football_save','mvpclub_api_football_nonce'); ?>
             <table class="form-table">
                 <tr>
-                    <th scope="row"><label for="mvpclub_api_key">API Key</label></th>
+                    <th scope="row"><label for="mvpclub_api_key"><?php echo esc_html__('API Key', 'mvpclub'); ?></label></th>
                     <td><input name="mvpclub_api_key" type="text" id="mvpclub_api_key" value="<?php echo esc_attr($key); ?>" class="regular-text" /></td>
                 </tr>
             </table>
-            <?php submit_button('Speichern'); ?>
+            <?php submit_button(__('Speichern', 'mvpclub')); ?>
         </form>
 
-        <h2>Spieler suchen</h2>
+        <h2><?php echo esc_html__('Spieler suchen', 'mvpclub'); ?></h2>
         <form id="mvpclub-player-search-form" method="get">
             <input type="hidden" name="page" value="mvpclub-api-football" />
             <input name="player_search" type="text" value="<?php echo esc_attr($player_search); ?>" class="regular-text" />
-            <?php submit_button('Suchen', 'secondary', 'submit', false); ?>
+            <?php submit_button(__('Suchen', 'mvpclub'), 'secondary', 'submit', false); ?>
         </form>
 
-        <h2>Ergebnisse</h2>
+        <h2><?php echo esc_html__('Ergebnisse', 'mvpclub'); ?></h2>
         <style>
             #mvpclub-search-results .mvpclub-add-player{display:block;width:100%;box-sizing:border-box;}
             #mvpclub-search-pagination{margin-top:10px;}
@@ -323,15 +323,15 @@ function mvpclub_render_api_football_settings_page() {
         <table id="mvpclub-search-results" class="widefat fixed striped">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Vorname</th>
-                    <th>Nachname</th>
-                    <th>Alter</th>
-                    <th>Geburtsdatum</th>
-                    <th>Geburtsort</th>
-                    <th>Nationalit&auml;t</th>
-                    <th>Gr&ouml;&szlig;e</th>
-                    <th>Position</th>
+                    <th><?php echo esc_html__('ID', 'mvpclub'); ?></th>
+                    <th><?php echo esc_html__('Vorname', 'mvpclub'); ?></th>
+                    <th><?php echo esc_html__('Nachname', 'mvpclub'); ?></th>
+                    <th><?php echo esc_html__('Alter', 'mvpclub'); ?></th>
+                    <th><?php echo esc_html__('Geburtsdatum', 'mvpclub'); ?></th>
+                    <th><?php echo esc_html__('Geburtsort', 'mvpclub'); ?></th>
+                    <th><?php echo esc_html__('Nationalität', 'mvpclub'); ?></th>
+                    <th><?php echo esc_html__('Größe', 'mvpclub'); ?></th>
+                    <th><?php echo esc_html__('Position', 'mvpclub'); ?></th>
                     <th></th>
                 </tr>
             </thead>
@@ -350,10 +350,10 @@ function mvpclub_render_api_football_settings_page() {
                         <td><?php echo esc_html($p['nationality']); ?></td>
                         <td><?php echo esc_html($p['height']); ?></td>
                         <td><?php echo esc_html($p['position']); ?></td>
-                        <td><button type="button" class="button mvpclub-add-player" data-id="<?php echo esc_attr($p['id']); ?>" data-player='<?php echo esc_attr(wp_json_encode($p)); ?>'>Hinzuf&uuml;gen</button></td>
+                        <td><button type="button" class="button mvpclub-add-player" data-id="<?php echo esc_attr($p['id']); ?>" data-player='<?php echo esc_attr(wp_json_encode($p)); ?>'><?php echo esc_html__('Hinzufügen', 'mvpclub'); ?></button></td>
                     </tr>
                 <?php endforeach; else: ?>
-                    <tr><td colspan="10">Keine Ergebnisse</td></tr>
+                    <tr><td colspan="10"><?php echo esc_html__('Keine Ergebnisse', 'mvpclub'); ?></td></tr>
                 <?php endif; ?>
             </tbody>
         </table>

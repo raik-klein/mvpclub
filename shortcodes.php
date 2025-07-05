@@ -15,7 +15,8 @@ add_shortcode('alter', function ($atts, $content = null) {
     if (!$geburt) return '';
 
     $heute = new DateTime();
-    return esc_html($heute->diff($geburt)->y . ' Jahre');
+    $years = $heute->diff($geburt)->y;
+    return esc_html(sprintf(__('%d Jahre', 'mvpclub'), $years));
 });
 
 add_shortcode('lesedauer', function () {
@@ -23,7 +24,7 @@ add_shortcode('lesedauer', function () {
     if (!$post || empty($post->post_content)) return '';
     $text = strip_tags($post->post_content);
     $minuten = ceil(str_word_count($text) / 200);
-    return esc_html($minuten . ' Minute' . ($minuten > 1 ? 'n' : '') . ' Lesedauer');
+    return esc_html(sprintf(_n('%d Minute Lesedauer', '%d Minuten Lesedauer', $minuten, 'mvpclub'), $minuten));
 });
 
 add_shortcode('ad', function($atts = array()) {

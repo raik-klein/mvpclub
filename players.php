@@ -8,16 +8,16 @@ add_action('init', 'mvpclub_register_player_cpt');
 function mvpclub_register_player_cpt() {
     register_post_type('mvpclub-spieler', array(
         'labels' => array(
-            'name'          => 'Spieler',
-            'singular_name' => 'Spieler',
-            'add_new'       => 'Spieler hinzufügen',
-            'add_new_item'  => 'Spieler hinzufügen',
-            'edit_item'     => 'Spieler bearbeiten',
-            'new_item'      => 'Neuer Spieler',
-            'view_item'     => 'Spieler ansehen',
-            'search_items'  => 'Spieler durchsuchen',
-            'not_found'     => 'Kein Spieler gefunden',
-            'not_found_in_trash' => 'Kein Spieler im Papierkorb',
+            'name'          => __('Spieler', 'mvpclub'),
+            'singular_name' => __('Spieler', 'mvpclub'),
+            'add_new'       => __('Spieler hinzufügen', 'mvpclub'),
+            'add_new_item'  => __('Spieler hinzufügen', 'mvpclub'),
+            'edit_item'     => __('Spieler bearbeiten', 'mvpclub'),
+            'new_item'      => __('Neuer Spieler', 'mvpclub'),
+            'view_item'     => __('Spieler ansehen', 'mvpclub'),
+            'search_items'  => __('Spieler durchsuchen', 'mvpclub'),
+            'not_found'     => __('Kein Spieler gefunden', 'mvpclub'),
+            'not_found_in_trash' => __('Kein Spieler im Papierkorb', 'mvpclub'),
         ),
         'public'      => false,
         'publicly_queryable' => false,
@@ -74,24 +74,24 @@ function mvpclub_migrate_player_cpt() {
  */
 function mvpclub_player_fields() {
     return array(
-        'birthdate'        => 'Geburtsdatum',
-        'birthplace'       => 'Geburtsort',
-        'height'           => 'Größe',
-        'nationality'      => 'Nationalität',
-        'position'         => 'Position',
-        'detail_position'  => 'Detailposition',
-        'foot'             => 'Fuß',
-        'club'             => 'Verein',
-        'market_value'     => 'Marktwert',
-        'rating'           => 'Bewertung',
-        'spielstil'        => 'Spielstil',
-        'rolle'            => 'Rolle',
-        'strengths'        => 'Stärken',
-        'weaknesses'       => 'Schwächen',
-        'performance_data' => 'Statistik',
-        'image'            => 'Bild',
-        'radar_chart'      => 'Radar Chart',
-        'api_id'           => 'ID',
+        'birthdate'        => __('Geburtsdatum', 'mvpclub'),
+        'birthplace'       => __('Geburtsort', 'mvpclub'),
+        'height'           => __('Größe', 'mvpclub'),
+        'nationality'      => __('Nationalität', 'mvpclub'),
+        'position'         => __('Position', 'mvpclub'),
+        'detail_position'  => __('Detailposition', 'mvpclub'),
+        'foot'             => __('Fuß', 'mvpclub'),
+        'club'             => __('Verein', 'mvpclub'),
+        'market_value'     => __('Marktwert', 'mvpclub'),
+        'rating'           => __('Bewertung', 'mvpclub'),
+        'spielstil'        => __('Spielstil', 'mvpclub'),
+        'rolle'            => __('Rolle', 'mvpclub'),
+        'strengths'        => __('Stärken', 'mvpclub'),
+        'weaknesses'       => __('Schwächen', 'mvpclub'),
+        'performance_data' => __('Statistik', 'mvpclub'),
+        'image'            => __('Bild', 'mvpclub'),
+        'radar_chart'      => __('Radar Chart', 'mvpclub'),
+        'api_id'           => __('ID', 'mvpclub'),
     );
 }
 
@@ -756,14 +756,14 @@ function mvpclub_player_meta_box($post) {
     foreach ($strengths as $s) {
         echo '<li>' . mvpclub_characteristic_select($type, 'strengths[]', $s) . ' <button type="button" class="button remove-characteristic">X</button></li>';
     }
-    echo '</ul><p><button type="button" class="button" id="add-strength">Hinzufügen</button></p></td></tr>';
+    echo '</ul><p><button type="button" class="button" id="add-strength">' . esc_html__('Hinzufügen', 'mvpclub') . '</button></p></td></tr>';
 
     echo '<tr><th><label>Schwächen</label></th><td>';
     echo '<ul id="mvpclub-weaknesses-list" class="mvpclub-characteristic-list">';
     foreach ($weaknesses as $w) {
         echo '<li>' . mvpclub_characteristic_select($type, 'weaknesses[]', $w) . ' <button type="button" class="button remove-characteristic">X</button></li>';
     }
-    echo '</ul><p><button type="button" class="button" id="add-weakness">Hinzufügen</button></p></td></tr>';
+    echo '</ul><p><button type="button" class="button" id="add-weakness">' . esc_html__('Hinzufügen', 'mvpclub') . '</button></p></td></tr>';
 
     echo '</table></div>';
 
@@ -997,7 +997,7 @@ function mvpclub_render_scout_settings_page() {
                     <button type="button" class="insert-placeholder button" data-placeholder="<?php echo esc_attr($tag); ?>"><?php echo esc_html($tag); ?></button>
                 <?php endforeach; ?>
             </p>
-            <?php submit_button('Speichern'); ?>
+            <?php submit_button(__('Speichern', 'mvpclub')); ?>
         </form>
 
         <h2>Vorschau <select id="mvpclub_preview_player" style="float:right;">
@@ -1095,9 +1095,9 @@ function mvpclub_characteristics_section($wrap = false) {
                 <?php endforeach; ?>
                 </tbody>
             </table>
-            <p><button type="button" class="button mvpclub-add-attr" data-group="<?php echo esc_attr($grp); ?>">Hinzufügen</button></p>
+            <p><button type="button" class="button mvpclub-add-attr" data-group="<?php echo esc_attr($grp); ?>"><?php echo esc_html__('Hinzufügen', 'mvpclub'); ?></button></p>
         <?php endforeach; ?>
-        <?php submit_button('Speichern'); ?>
+        <?php submit_button(__('Speichern', 'mvpclub')); ?>
     </form>
     <script type="text/template" id="attr-row-template">
         <tr>
@@ -1402,7 +1402,7 @@ function mvpclub_render_statistik_settings_page() {
                     </td>
                 </tr>
             </table>
-            <?php submit_button('Speichern'); ?>
+            <?php submit_button(__('Speichern', 'mvpclub')); ?>
         </form>
 
         <h2>Live-Vorschau</h2>
