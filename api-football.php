@@ -297,7 +297,7 @@ function mvpclub_render_api_football_settings_page() {
             <?php submit_button('Speichern'); ?>
         </form>
 
-        <h2>Spieler suchen</h2>
+        <h2>Spieler-ID suchen</h2>
         <form method="get">
             <input type="hidden" name="page" value="mvpclub-api-football" />
             <input name="player_search" type="text" value="<?php echo esc_attr($player_search); ?>" class="regular-text" />
