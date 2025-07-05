@@ -55,6 +55,18 @@ function mvpclub_api_football_get_player($player_id, $season = null) {
     return $data['response'][0];
 }
 
+function mvpclub_api_football_get_player_profiles($player_id) {
+    $data = mvpclub_api_football_request('players/profiles', array(
+        'player' => $player_id,
+    ));
+
+    if (is_wp_error($data)) {
+        return $data;
+    }
+
+    return isset($data['response']) ? $data['response'] : array();
+}
+
 function mvpclub_api_football_search_players($query, $season = null) {
     if (!$season) {
         $season = date('Y');
@@ -186,11 +198,11 @@ function mvpclub_render_api_football_settings_page() {
     $player_id = isset($_GET['player_id']) ? intval($_GET['player_id']) : '';
     $results = array();
     if ($player_id !== '') {
-        $result = mvpclub_api_football_get_player($player_id);
+        $result = mvpclub_api_football_get_player_profiles($player_id);
         if (is_wp_error($result)) {
             echo '<div class="error"><p>' . esc_html($result->get_error_message()) . '</p></div>';
         } else {
-            $results = array($result);
+            $results = $result;
         }
     }
 
