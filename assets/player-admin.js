@@ -9,9 +9,9 @@ jQuery(function($){
         return select;
     }
 
-    function addStatistikRow(){
+    function addStatistikRow(season){
         var row = $('<tr>')
-            .append('<td><input type="text" name="perf_saison[]" /></td>')
+            .append('<td><input type="text" name="perf_saison[]" value="'+(season||'')+'" /></td>')
             .append($('<td>').append(competitionSelect()))
             .append('<td><input type="number" name="perf_games[]" /></td>')
             .append('<td><input type="number" name="perf_goals[]" /></td>')
@@ -38,6 +38,27 @@ jQuery(function($){
     $(document).on('click', '#add-statistik-row', function(e){
         e.preventDefault();
         addStatistikRow();
+    });
+
+    $(document).on('click', '#mvpclub-load-seasons', function(e){
+        e.preventDefault();
+        var pid = $('#mvpclub-api-player-id').val();
+        if(!pid) return;
+        $.post(ajaxurl, {
+            action: 'mvpclub_load_seasons',
+            nonce: mvpclubPlayerAdmin.nonce,
+            player_id: pid
+        }, function(resp){
+            if(resp.success && Array.isArray(resp.data)){
+                var tbody = $('#statistik-data-table tbody');
+                tbody.empty();
+                resp.data.forEach(function(year){
+                    addStatistikRow(year);
+                });
+            }else if(resp.data){
+                alert(resp.data);
+            }
+        }, 'json');
     });
 
     $(document).on('click', '.remove-statistik-row', function(e){
