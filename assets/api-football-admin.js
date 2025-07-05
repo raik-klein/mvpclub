@@ -12,7 +12,11 @@ jQuery(function($){
         tr.append('<td>'+(p.nationality||'')+'</td>');
         tr.append('<td>'+(p.height||'')+'</td>');
         tr.append('<td>'+(p.position||'')+'</td>');
-        var btn = $('<button>').addClass('button mvpclub-add-player').text('Hinzuf\u00fcgen').data('player', p);
+        var btn = $('<button type="button">')
+            .addClass('button mvpclub-add-player')
+            .text('Hinzuf\u00fcgen')
+            .attr('data-id', p.id)
+            .data('player', p);
         tr.append($('<td>').append(btn));
         return tr;
     }
@@ -67,17 +71,44 @@ jQuery(function($){
 
     $(document).on('click','.mvpclub-add-player', function(e){
         e.preventDefault();
-        var player = $(this).data('player');
+        var btn = $(this);
+        if(btn.prop('disabled')) return;
+        btn.prop('disabled', true);
+        var player = btn.data('player');
+
+        if(!player || typeof player !== 'object'){
+            // Fallback: read from table row if no data attached
+            var tr = btn.closest('tr');
+            player = {
+                id: parseInt(tr.find('td').eq(0).text(), 10),
+                firstname: tr.find('td').eq(1).text(),
+                lastname: tr.find('td').eq(2).text(),
+                age: parseInt(tr.find('td').eq(3).text(), 10) || '',
+                birth: {
+                    date: tr.find('td').eq(4).text(),
+                    place: tr.find('td').eq(5).text()
+                },
+                nationality: tr.find('td').eq(6).text(),
+                height: tr.find('td').eq(7).text(),
+                position: tr.find('td').eq(8).text()
+            };
+        }
+
         $.post(mvpclubAPIFootball.ajaxUrl, {
             action: 'mvpclub_add_player',
             nonce: mvpclubAPIFootball.addNonce,
             player: JSON.stringify(player)
         }, function(resp){
             if(resp.success && resp.data && resp.data.edit_link){
+                alert('Spieler importiert');
                 window.location.href = resp.data.edit_link;
             }else{
-                alert(resp.data || 'Fehler');
+                alert(resp.data || 'Fehler beim Import');
             }
-        }, 'json');
+            btn.prop('disabled', false);
+        }, 'json').fail(function(){
+            alert('Fehler beim Senden der Anfrage');
+            btn.prop('disabled', false);
+        });
     });
 });
