@@ -16,3 +16,7 @@ Das **mvpclub.de Plugin** erweitert WordPress um maßgeschneiderte Funktionen f�
 1. Klone das Repository oder lade den Plugin-Ordner herunter
 2. Kopiere den Plugin-Ordner nach `wp-content/plugins` deiner WordPress-Installation.
 3. Aktiviere das Plugin anschließend in WordPress unter "Plugins".
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
