@@ -21,6 +21,20 @@ jQuery(function($){
         $('#statistik-data-table tbody').append(row);
     }
 
+    function updateStatHeaders(){
+        if(!window.mvpclubPlayerAdmin) return;
+        var headers = $('#position').val()==='Tor' ? window.mvpclubPlayerAdmin.headersTor : window.mvpclubPlayerAdmin.headers;
+        var ths = $('#statistik-data-table thead th');
+        if(ths.length>=6){
+            ths.eq(0).text(headers.saison);
+            ths.eq(1).text(headers.wettbewerb);
+            ths.eq(2).text(headers.spiele);
+            ths.eq(3).text(headers.tore);
+            ths.eq(4).text(headers.assists);
+            ths.eq(5).text(headers.minuten);
+        }
+    }
+
     $(document).on('click', '#add-statistik-row', function(e){
         e.preventDefault();
         addStatistikRow();
@@ -30,6 +44,9 @@ jQuery(function($){
         e.preventDefault();
         $(this).closest('tr').remove();
     });
+
+    $(document).on('change', '#position', updateStatHeaders);
+    updateStatHeaders();
 
     function characteristicSelect(type, name){
         var select = $('<select name="'+name+'[]">').append('<option value=""></option>');
