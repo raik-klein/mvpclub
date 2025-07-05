@@ -350,7 +350,7 @@ function mvpclub_render_api_football_settings_page() {
                         <td><?php echo esc_html($p['nationality']); ?></td>
                         <td><?php echo esc_html($p['height']); ?></td>
                         <td><?php echo esc_html($p['position']); ?></td>
-                        <td><button class="button mvpclub-add-player" data-player='<?php echo esc_attr(wp_json_encode($p)); ?>'>Hinzuf&uuml;gen</button></td>
+                        <td><button type="button" class="button mvpclub-add-player" data-player='<?php echo esc_attr(wp_json_encode($p)); ?>'>Hinzuf&uuml;gen</button></td>
                     </tr>
                 <?php endforeach; else: ?>
                     <tr><td colspan="10">Keine Ergebnisse</td></tr>
