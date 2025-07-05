@@ -187,6 +187,18 @@ function mvpclub_import_player_post($player_id, $season = null) {
     return $post_id;
 }
 
+function mvpclub_api_football_get_player_seasons($player_id) {
+    $data = mvpclub_api_football_request('players/seasons', array(
+        'player' => $player_id,
+    ));
+
+    if (is_wp_error($data)) {
+        return $data;
+    }
+
+    return isset($data['response']) ? $data['response'] : array();
+}
+
 if (defined('WP_CLI') && WP_CLI) {
     WP_CLI::add_command('mvpclub import-player', function($args, $assoc_args) {
         list($player_id) = $args;
