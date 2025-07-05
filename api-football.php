@@ -243,7 +243,7 @@ add_action('admin_menu', function() {
 
 add_action('admin_enqueue_scripts', 'mvpclub_api_football_admin_scripts');
 function mvpclub_api_football_admin_scripts($hook){
-    if($hook !== 'mvpclub_page_mvpclub-api-football') return;
+    if (strpos($hook, 'mvpclub-api-football') === false) return;
     wp_enqueue_script(
         'mvpclub-api-football-admin',
         plugins_url('assets/api-football-admin.js', __FILE__),
@@ -350,7 +350,7 @@ function mvpclub_render_api_football_settings_page() {
                         <td><?php echo esc_html($p['nationality']); ?></td>
                         <td><?php echo esc_html($p['height']); ?></td>
                         <td><?php echo esc_html($p['position']); ?></td>
-                        <td><button type="button" class="button mvpclub-add-player" data-player='<?php echo esc_attr(wp_json_encode($p)); ?>'>Hinzuf&uuml;gen</button></td>
+                        <td><button type="button" class="button mvpclub-add-player" data-id="<?php echo esc_attr($p['id']); ?>" data-player='<?php echo esc_attr(wp_json_encode($p)); ?>'>Hinzuf&uuml;gen</button></td>
                     </tr>
                 <?php endforeach; else: ?>
                     <tr><td colspan="10">Keine Ergebnisse</td></tr>

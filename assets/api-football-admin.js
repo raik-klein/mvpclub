@@ -12,7 +12,11 @@ jQuery(function($){
         tr.append('<td>'+(p.nationality||'')+'</td>');
         tr.append('<td>'+(p.height||'')+'</td>');
         tr.append('<td>'+(p.position||'')+'</td>');
-        var btn = $('<button type="button">').addClass('button mvpclub-add-player').text('Hinzuf\u00fcgen').data('player', p);
+        var btn = $('<button type="button">')
+            .addClass('button mvpclub-add-player')
+            .text('Hinzuf\u00fcgen')
+            .attr('data-id', p.id)
+            .data('player', p);
         tr.append($('<td>').append(btn));
         return tr;
     }
@@ -68,6 +72,8 @@ jQuery(function($){
     $(document).on('click','.mvpclub-add-player', function(e){
         e.preventDefault();
         var btn = $(this);
+        if(btn.prop('disabled')) return;
+        btn.prop('disabled', true);
         var player = btn.data('player');
 
         if(!player || typeof player !== 'object'){
@@ -94,12 +100,15 @@ jQuery(function($){
             player: JSON.stringify(player)
         }, function(resp){
             if(resp.success && resp.data && resp.data.edit_link){
+                alert('Spieler importiert');
                 window.location.href = resp.data.edit_link;
             }else{
                 alert(resp.data || 'Fehler beim Import');
             }
+            btn.prop('disabled', false);
         }, 'json').fail(function(){
             alert('Fehler beim Senden der Anfrage');
+            btn.prop('disabled', false);
         });
     });
 });
