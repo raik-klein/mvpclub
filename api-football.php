@@ -91,18 +91,11 @@ function mvpclub_api_football_get_player_profiles($player_id) {
     return isset($data['response']) ? $data['response'] : array();
 }
 
-function mvpclub_api_football_search_players($query, $season = null, $league_id = null) {
-    if (!$season) {
-        $season = date('Y');
-    }
+function mvpclub_api_football_search_players($query) {
     $params = array(
         'search' => $query,
-        'season' => $season,
     );
-    if ($league_id) {
-        $params['league'] = $league_id;
-    }
-    $data = mvpclub_api_football_request('players', $params);
+    $data = mvpclub_api_football_request('players/profiles', $params);
 
     if (is_wp_error($data)) {
         return $data;
@@ -111,19 +104,7 @@ function mvpclub_api_football_search_players($query, $season = null, $league_id 
     return isset($data['response']) ? $data['response'] : array();
 }
 
-function mvpclub_import_player_post($player_id, $season = null) {
-    $profiles = mvpclub_api_football_get_player_profiles($player_id);
-    if (is_wp_error($profiles)) {
-        return $profiles;
-    }
-
-    if (empty($profiles[0]['player'])) {
-        return new WP_Error('not_found', 'Player not found');
-    }
-
-    $player = $profiles[0]['player'];
-    $stats  = array();
-
+function mvpclub_create_player_post($player){
     $full_name = trim(($player['firstname'] ?? '') . ' ' . ($player['lastname'] ?? ''));
     if ($full_name === '') {
         $full_name = isset($player['name']) ? $player['name'] : '';
@@ -133,62 +114,46 @@ function mvpclub_import_player_post($player_id, $season = null) {
         'post_status' => 'publish',
         'post_title'  => sanitize_text_field($full_name),
     ));
-    if (is_wp_error($post_id)) {
-        return $post_id;
-    }
+    if (is_wp_error($post_id)) return $post_id;
 
-    $birthdate = '';
+    update_post_meta($post_id, 'api_id', intval($player['id']));
+
     if (!empty($player['birth']['date'])) {
         $d = DateTime::createFromFormat('Y-m-d', $player['birth']['date']);
-        if ($d) {
-            $birthdate = $d->format('d.m.Y');
-        }
+        if ($d) update_post_meta($post_id, 'birthdate', $d->format('d.m.Y'));
     }
-    if ($birthdate) {
-        update_post_meta($post_id, 'birthdate', $birthdate);
-    }
-
     if (!empty($player['birth']['country']) || !empty($player['birth']['place'])) {
         $place = trim($player['birth']['country'] . ' ' . $player['birth']['place']);
         update_post_meta($post_id, 'birthplace', $place);
     }
-
     if (!empty($player['nationality'])) {
         $nat_label = mvpclub_get_nationality_label($player['nationality']);
-        if ($nat_label) {
-            update_post_meta($post_id, 'nationality', $nat_label);
-        } else {
-            update_post_meta($post_id, 'nationality', $player['nationality']);
-        }
+        update_post_meta($post_id, 'nationality', $nat_label ? $nat_label : $player['nationality']);
     }
-
-    if (!empty($player['height'])) {
-        if (preg_match('/(\d+)/', $player['height'], $m)) {
-            update_post_meta($post_id, 'height', intval($m[1]));
-        }
+    if (!empty($player['height']) && preg_match('/(\d+)/', $player['height'], $m)) {
+        update_post_meta($post_id, 'height', intval($m[1]));
     }
-
-    $position_value = !empty($stats['games']['position']) ? $stats['games']['position'] : (isset($player['position']) ? $player['position'] : '');
-    if ($position_value) {
-        $map = array(
-            'Goalkeeper' => 'Tor',
-            'Defender'   => 'Abwehr',
-            'Midfielder' => 'Mittelfeld',
-            'Attacker'   => 'Sturm',
-        );
-        $position = isset($map[$position_value]) ? $map[$position_value] : $position_value;
-        update_post_meta($post_id, 'position', $position);
+    if (!empty($player['position'])) {
+        $map = array('Goalkeeper'=>'Tor','Defender'=>'Abwehr','Midfielder'=>'Mittelfeld','Attacker'=>'Sturm');
+        $pos = isset($map[$player['position']]) ? $map[$player['position']] : $player['position'];
+        update_post_meta($post_id, 'position', $pos);
     }
-
-    if (!empty($stats['team']['name'])) {
-        update_post_meta($post_id, 'club', $stats['team']['name']);
-    }
-
     if (!empty($player['photo'])) {
         update_post_meta($post_id, 'image_external', esc_url_raw($player['photo']));
     }
-
     return $post_id;
+}
+
+function mvpclub_import_player_post($player_id, $season = null) {
+    $profiles = mvpclub_api_football_get_player_profiles($player_id);
+    if (is_wp_error($profiles)) {
+        return $profiles;
+    }
+    if (empty($profiles[0]['player'])) {
+        return new WP_Error('not_found', 'Player not found');
+    }
+
+    return mvpclub_create_player_post($profiles[0]['player']);
 }
 
 function mvpclub_api_football_get_player_seasons($player_id) {
@@ -220,19 +185,27 @@ add_action('wp_ajax_mvpclub_search_players', 'mvpclub_ajax_search_players');
 function mvpclub_ajax_search_players(){
     check_ajax_referer('mvpclub_api_football', 'nonce');
     $query  = sanitize_text_field($_POST['query']);
-    $league = isset($_POST['league']) ? wp_unslash($_POST['league']) : '';
-    $league_id = '';
-    if($league !== ''){
-        $league_id = mvpclub_api_football_find_league_id($league);
-        if(is_wp_error($league_id)){
-            wp_send_json_error($league_id->get_error_message());
-        }
-    }
-    $res = mvpclub_api_football_search_players($query, null, $league_id);
+    $res = mvpclub_api_football_search_players($query);
     if(is_wp_error($res)){
         wp_send_json_error($res->get_error_message());
     }
     wp_send_json_success($res);
+}
+
+add_action('wp_ajax_mvpclub_add_player', 'mvpclub_ajax_add_player');
+function mvpclub_ajax_add_player(){
+    check_ajax_referer('mvpclub_add_player', 'nonce');
+    $player = isset($_POST['player']) ? (array) $_POST['player'] : array();
+    if(empty($player['id'])){
+        wp_send_json_error('Missing data');
+    }
+    $player = array_map('wp_unslash', $player);
+    $id = mvpclub_create_player_post($player);
+    if(is_wp_error($id)){
+        wp_send_json_error($id->get_error_message());
+    }
+    $edit_link = admin_url('post.php?post='.$id.'&action=edit');
+    wp_send_json_success(array('post_id'=>$id,'edit_link'=>$edit_link));
 }
 
 if (defined('WP_CLI') && WP_CLI) {
@@ -272,8 +245,7 @@ function mvpclub_api_football_admin_scripts($hook){
     wp_localize_script('mvpclub-api-football-admin','mvpclubAPIFootball',array(
         'ajaxUrl' => admin_url('admin-ajax.php'),
         'nonce'   => wp_create_nonce('mvpclub_api_football'),
-        'addNonce'=> wp_create_nonce('mvpclub_add_player'),
-        'baseUrl' => admin_url('admin.php?page=mvpclub-api-football')
+        'addNonce'=> wp_create_nonce('mvpclub_add_player')
     ));
 }
 
@@ -300,18 +272,9 @@ function mvpclub_render_api_football_settings_page() {
     }
 
     $player_search = isset($_GET['player_search']) ? sanitize_text_field($_GET['player_search']) : '';
-    $search_league = isset($_GET['search_league']) ? wp_unslash($_GET['search_league']) : '';
     $results = array();
     if ($player_search !== '') {
-        $league_id = '';
-        if ($search_league !== '') {
-            $league_id = mvpclub_api_football_find_league_id($search_league);
-            if (is_wp_error($league_id)) {
-                echo '<div class="error"><p>' . esc_html($league_id->get_error_message()) . '</p></div>';
-                $league_id = '';
-            }
-        }
-        $result = mvpclub_api_football_search_players($player_search, null, $league_id);
+        $result = mvpclub_api_football_search_players($player_search);
         if (is_wp_error($result)) {
             echo '<div class="error"><p>' . esc_html($result->get_error_message()) . '</p></div>';
         } else {
@@ -338,7 +301,6 @@ function mvpclub_render_api_football_settings_page() {
         <form id="mvpclub-player-search-form" method="get">
             <input type="hidden" name="page" value="mvpclub-api-football" />
             <input name="player_search" type="text" value="<?php echo esc_attr($player_search); ?>" class="regular-text" />
-            <?php echo mvpclub_competition_select($search_league, 'search_league'); ?>
             <?php submit_button('Suchen', 'secondary', 'submit', false); ?>
         </form>
 
@@ -346,24 +308,37 @@ function mvpclub_render_api_football_settings_page() {
         <table id="mvpclub-search-results" class="widefat fixed striped">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Team</th>
+                    <th>ID</th>
+                    <th>Vorname</th>
+                    <th>Nachname</th>
+                    <th>Alter</th>
+                    <th>Geburtsdatum</th>
+                    <th>Geburtsort</th>
+                    <th>Nationalit&auml;t</th>
+                    <th>Gr&ouml;&szlig;e</th>
+                    <th>Position</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (!empty($results)) : foreach ($results as $row) :
                     $p = $row['player'];
-                    $team = isset($row['statistics'][0]['team']['name']) ? $row['statistics'][0]['team']['name'] : '';
-                    $link = wp_nonce_url(admin_url('admin.php?page=mvpclub-api-football&add_player=' . $p['id'] . '&player_search=' . urlencode($player_search) . '&search_league=' . urlencode($search_league)), 'mvpclub_add_player');
+                    $link = '#';
                 ?>
                     <tr>
-                        <td><?php echo esc_html(trim(($p['firstname'] ?? '') . ' ' . ($p['lastname'] ?? $p['name']))); ?></td>
-                        <td><?php echo esc_html($team); ?></td>
-                        <td><a href="<?php echo esc_url($link); ?>" class="button">Spieler hinzuf&uuml;gen</a></td>
+                        <td><?php echo esc_html($p['id']); ?></td>
+                        <td><?php echo esc_html($p['firstname']); ?></td>
+                        <td><?php echo esc_html($p['lastname']); ?></td>
+                        <td><?php echo esc_html($p['age']); ?></td>
+                        <td><?php echo esc_html($p['birth']['date']); ?></td>
+                        <td><?php echo esc_html($p['birth']['place']); ?></td>
+                        <td><?php echo esc_html($p['nationality']); ?></td>
+                        <td><?php echo esc_html($p['height']); ?></td>
+                        <td><?php echo esc_html($p['position']); ?></td>
+                        <td><button class="button mvpclub-add-player" data-player='<?php echo esc_attr(wp_json_encode($p)); ?>'>Spieler hinzuf&uuml;gen</button></td>
                     </tr>
                 <?php endforeach; else: ?>
-                    <tr><td colspan="3">Keine Ergebnisse</td></tr>
+                    <tr><td colspan="10">Keine Ergebnisse</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
