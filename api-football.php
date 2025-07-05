@@ -198,12 +198,15 @@ function mvpclub_ajax_add_player(){
     $raw = isset($_POST['player']) ? $_POST['player'] : '';
     if (is_string($raw)) {
         $player = json_decode(wp_unslash($raw), true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            wp_send_json_error('Ungültige Daten');
+        }
     } elseif (is_array($raw)) {
         $player = array_map('wp_unslash', $raw);
     } else {
         $player = array();
     }
-    if(empty($player['id'])){
+    if (empty($player['id'])) {
         wp_send_json_error('Missing data');
     }
     $id = mvpclub_create_player_post($player);
@@ -347,7 +350,7 @@ function mvpclub_render_api_football_settings_page() {
                         <td><?php echo esc_html($p['nationality']); ?></td>
                         <td><?php echo esc_html($p['height']); ?></td>
                         <td><?php echo esc_html($p['position']); ?></td>
-                        <td><button class="button mvpclub-add-player" data-player='<?php echo esc_attr(wp_json_encode($p)); ?>'>Hinzuf&uuml;gen</button></td>
+                        <td><button type="button" class="button mvpclub-add-player" data-player='<?php echo esc_attr(wp_json_encode($p)); ?>'>Hinzuf&uuml;gen</button></td>
                     </tr>
                 <?php endforeach; else: ?>
                     <tr><td colspan="10">Keine Ergebnisse</td></tr>
