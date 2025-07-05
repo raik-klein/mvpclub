@@ -12,7 +12,7 @@ jQuery(function($){
         tr.append('<td>'+(p.nationality||'')+'</td>');
         tr.append('<td>'+(p.height||'')+'</td>');
         tr.append('<td>'+(p.position||'')+'</td>');
-        var btn = $('<button>').addClass('button mvpclub-add-player').text('Spieler hinzuf\u00fcgen').data('player', p);
+        var btn = $('<button>').addClass('button mvpclub-add-player').text('Hinzuf\u00fcgen').data('player', p);
         tr.append($('<td>').append(btn));
         return tr;
     }

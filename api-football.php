@@ -195,8 +195,14 @@ function mvpclub_ajax_search_players(){
 add_action('wp_ajax_mvpclub_add_player', 'mvpclub_ajax_add_player');
 function mvpclub_ajax_add_player(){
     check_ajax_referer('mvpclub_add_player', 'nonce');
-    $json = isset($_POST['player']) ? wp_unslash($_POST['player']) : '';
-    $player = json_decode($json, true);
+    $raw = isset($_POST['player']) ? $_POST['player'] : '';
+    if (is_string($raw)) {
+        $player = json_decode(wp_unslash($raw), true);
+    } elseif (is_array($raw)) {
+        $player = array_map('wp_unslash', $raw);
+    } else {
+        $player = array();
+    }
     if(empty($player['id'])){
         wp_send_json_error('Missing data');
     }
@@ -341,7 +347,7 @@ function mvpclub_render_api_football_settings_page() {
                         <td><?php echo esc_html($p['nationality']); ?></td>
                         <td><?php echo esc_html($p['height']); ?></td>
                         <td><?php echo esc_html($p['position']); ?></td>
-                        <td><button class="button mvpclub-add-player" data-player='<?php echo esc_attr(wp_json_encode($p)); ?>'>Spieler hinzuf&uuml;gen</button></td>
+                        <td><button class="button mvpclub-add-player" data-player='<?php echo esc_attr(wp_json_encode($p)); ?>'>Hinzuf&uuml;gen</button></td>
                     </tr>
                 <?php endforeach; else: ?>
                     <tr><td colspan="10">Keine Ergebnisse</td></tr>
