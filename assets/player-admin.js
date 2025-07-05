@@ -1,12 +1,7 @@
 jQuery(function($){
-    // keep API ID in sync between tabs
-    $('#mvpclub-api-player-id').val($('#api_id').val());
-    $(document).on('input', '#api_id', function(){
-        $('#mvpclub-api-player-id').val($(this).val());
-    });
-    $(document).on('input', '#mvpclub-api-player-id', function(){
-        $('#api_id').val($(this).val());
-    });
+    function getPlayerId(){
+        return $('#api_id').val();
+    }
     function competitionSelect(){
         var select = $('<select name="perf_competition[]">').append('<option value="">-</option>');
         if(window.mvpclubPlayerAdmin && Array.isArray(window.mvpclubPlayerAdmin.competitions)){
@@ -50,7 +45,7 @@ jQuery(function($){
 
 $(document).on('click', '#mvpclub-load-seasons', function(e){
         e.preventDefault();
-        var pid = $('#mvpclub-api-player-id').val();
+        var pid = getPlayerId();
         if(!pid) return;
         $.post(ajaxurl, {
             action: 'mvpclub_load_seasons',
@@ -69,9 +64,9 @@ $(document).on('click', '#mvpclub-load-seasons', function(e){
         }, 'json');
     });
 
-    $(document).on('click', '#mvpclub-load-stats', function(e){
+$(document).on('click', '#mvpclub-load-stats', function(e){
         e.preventDefault();
-        var pid = $('#mvpclub-api-player-id').val();
+        var pid = getPlayerId();
         if(!pid) return;
         var seasons = [];
         $('#statistik-data-table tbody tr').each(function(){

@@ -195,11 +195,11 @@ function mvpclub_ajax_search_players(){
 add_action('wp_ajax_mvpclub_add_player', 'mvpclub_ajax_add_player');
 function mvpclub_ajax_add_player(){
     check_ajax_referer('mvpclub_add_player', 'nonce');
-    $player = isset($_POST['player']) ? (array) $_POST['player'] : array();
+    $json = isset($_POST['player']) ? wp_unslash($_POST['player']) : '';
+    $player = json_decode($json, true);
     if(empty($player['id'])){
         wp_send_json_error('Missing data');
     }
-    $player = array_map('wp_unslash', $player);
     $id = mvpclub_create_player_post($player);
     if(is_wp_error($id)){
         wp_send_json_error($id->get_error_message());
@@ -305,6 +305,12 @@ function mvpclub_render_api_football_settings_page() {
         </form>
 
         <h2>Ergebnisse</h2>
+        <style>
+            #mvpclub-search-results .mvpclub-add-player{display:block;width:100%;box-sizing:border-box;}
+            #mvpclub-search-pagination{margin-top:10px;}
+            #mvpclub-search-pagination a{margin-right:5px;text-decoration:none;}
+            #mvpclub-search-pagination a.current{font-weight:bold;}
+        </style>
         <table id="mvpclub-search-results" class="widefat fixed striped">
             <thead>
                 <tr>
@@ -342,6 +348,7 @@ function mvpclub_render_api_football_settings_page() {
                 <?php endif; ?>
             </tbody>
         </table>
+        <div id="mvpclub-search-pagination"></div>
     </div>
     <?php
 }
