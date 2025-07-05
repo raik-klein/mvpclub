@@ -168,19 +168,6 @@ function mvpclub_api_football_get_player_seasons($player_id) {
     return isset($data['response']) ? $data['response'] : array();
 }
 
-function mvpclub_api_football_find_league_id($label) {
-    $name = trim(preg_replace('/^[^a-zA-Z0-9]+/u', '', $label));
-    if ($name === '') return '';
-    $data = mvpclub_api_football_request('leagues', array('search' => $name));
-    if (is_wp_error($data)) {
-        return $data;
-    }
-    if (empty($data['response'][0]['league']['id'])) {
-        return '';
-    }
-    return $data['response'][0]['league']['id'];
-}
-
 add_action('wp_ajax_mvpclub_search_players', 'mvpclub_ajax_search_players');
 function mvpclub_ajax_search_players(){
     check_ajax_referer('mvpclub_api_football', 'nonce');
