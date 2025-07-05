@@ -1237,7 +1237,8 @@ function mvpclub_ajax_load_stats() {
         if (empty($res['statistics'][0])) continue;
         $stat = $res['statistics'][0];
         $league = $stat['league']['name'] ?? '';
-        $label = mvpclub_match_competition_label($league);
+        $country = $stat['league']['country'] ?? '';
+        $label = mvpclub_match_competition_label($league, $country);
         $games = intval($stat['games']['appearences'] ?? $stat['games']['appearances'] ?? 0);
         $goals = intval($stat['goals']['total'] ?? 0);
         $assists = intval($stat['goals']['assists'] ?? 0);
